@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { useAddOn } from "@/lib/addon";
+import { UnlockButton } from "./UpgradeModal";
 
 /** A row for something that comes with the paid Developer add-on (PRODUCT.md: "Free users see,
     paid users do"). Without the add-on it's locked, and hover, tap or focus says why.
@@ -18,17 +19,20 @@ export function AddOnTip({ label, className = "", unlocked }: { label: string; c
     );
   return (
     <span className={`group relative flex items-center justify-between gap-3 ${className}`}>
-      <button type="button" aria-describedby="add-on-tip" className="flex items-center gap-2 text-left outline-none">
+      <button type="button" aria-describedby="add-on-tip" className="peer flex items-center gap-2 text-left outline-none">
         <Icon name="lock" size={13} />
         {label}
       </button>
-      <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium whitespace-nowrap">Developer add-on</span>
+      <span className="flex items-center gap-2">
+        <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium whitespace-nowrap">Developer add-on</span>
+        <UnlockButton className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-on-primary" />
+      </span>
       <span
         id="add-on-tip"
         role="tooltip"
-        className="pointer-events-none invisible absolute right-0 bottom-full z-50 mb-2 w-64 rounded-lg bg-ink px-3 py-2 text-xs leading-snug text-bg opacity-0 shadow-pop transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+        className="pointer-events-none invisible absolute right-0 bottom-full z-50 mb-2 w-64 rounded-lg bg-ink px-3 py-2 text-xs leading-snug text-bg opacity-0 shadow-pop transition-opacity peer-hover:visible peer-hover:opacity-100 peer-focus:visible peer-focus:opacity-100"
       >
-        This comes with the Developer add-on. Developer view shows more; the add-on lets you change it. Try it in Settings → Your plan.
+        This comes with the Developer add-on. Developer view shows more; the add-on lets you change it. Press Unlock to see what it adds.
       </span>
     </span>
   );

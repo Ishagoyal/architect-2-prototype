@@ -13,6 +13,8 @@ import { usePrefs, type ThemeChoice } from "@/lib/prefs";
 import { useViewer } from "@/lib/viewer-context";
 import { AddOnTip, ProjectLimitInput } from "../AddOnTip";
 import { useAddOn } from "@/lib/addon";
+import { UnlockButton, addOnFeatures } from "../UpgradeModal";
+import { useWorkspaceList } from "../workspaces";
 
 const page = "mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-4 pt-8 pb-24 md:px-8 md:pt-10 md:pb-10";
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
@@ -190,6 +192,7 @@ export function UsagePage() {
           <span className="flex gap-2"><button type="button" className={btnPrimary}>Top up</button><button type="button" className={btnOutline}>Change limit</button></span>
         </div>
       </div>
+      <TeamReport used={used} />
       <p className="text-xs text-ink-2">All numbers here are made-up examples for the prototype.</p>
     </div>
   );
@@ -256,14 +259,81 @@ function PlanCard({ plan }: { plan: string }) {
       </span>
       <p className="text-sm text-ink-2">
         {addOn ? "Developer add-on is on. " : "Developer add-on not included. "}
-        It adds: pick an exact model (in the Builder menu), a limit per project (in Usage), and tokens for each finished step (in the chat).
+        It adds: {addOnFeatures.map((f) => f.charAt(0).toLowerCase() + f.slice(1)).join(", ")}.
       </p>
       <span className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={() => setAddOn(!addOn)} className={addOn ? btnOutline : btnPrimary}>
-          {addOn ? "Turn off the Developer add-on" : "Try the Developer add-on"}
-        </button>
+        {addOn ? (
+          <button type="button" onClick={() => setAddOn(false)} className={btnOutline}>
+            Turn off the Developer add-on
+          </button>
+        ) : (
+          <UnlockButton className={btnPrimary}>Try the Developer add-on</UnlockButton>
+        )}
         <span className="text-xs text-ink-2">Prototype only: no payment, and it stays in this browser.</span>
       </span>
+    </div>
+  );
+}
+
+/** Usage report by person (Developer add-on): who used what this month, and a CSV to download. */
+function TeamReport({ used }: { used: number }) {
+  const { addOn } = useAddOn();
+  const { current } = useWorkspaceList();
+  const { projects } = useProjects();
+  const people = current.people.filter((p) => !p.invited);
+  const weights = people.length === 1 ? [1] : people.map((_, i) => Math.max(1, people.length - i));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const rows = people.map((p, i) => ({
+    name: p.name,
+    role: p.role,
+    share: Math.round((used * weights[i]) / sum),
+    top: projects[i % Math.max(1, projects.length)]?.name ?? "—",
+  }));
+  const download = () => {
+    const csv = ["Person,Role,Credits this month (%),Used most on", ...rows.map((r) => [r.name, r.role, r.share, r.top].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = `${current.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-usage.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  return (
+    <div className={card}>
+      <span className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-lg font-semibold">Report by person</span>
+        {addOn ? (
+          <button type="button" onClick={download} className={btnOutline}>Download CSV</button>
+        ) : (
+          <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-ink-2">Developer add-on</span>
+        )}
+      </span>
+      {!addOn ? (
+        <>
+          <p className="text-sm text-ink-2">Who used how many credits this month, and on which project. Useful for teams sharing one workspace.</p>
+          <UnlockButton className={`${btnPrimary} self-start`}>Unlock the report</UnlockButton>
+        </>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[420px] text-left text-sm">
+            <thead>
+              <tr className="text-xs text-ink-2">
+                <th className="py-2 font-semibold">Person</th>
+                <th className="py-2 font-semibold">Credits this month</th>
+                <th className="py-2 font-semibold">Used most on</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.name + r.role} className="border-t border-line">
+                  <td className="py-2.5">{r.name} <span className="text-xs text-ink-2">· {r.role}</span></td>
+                  <td className="py-2.5">{r.share}%</td>
+                  <td className="py-2.5 text-ink-2">{r.top}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

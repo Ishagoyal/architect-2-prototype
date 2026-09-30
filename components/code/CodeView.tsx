@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Icon } from "../Icon";
 import { planMarkdown, uid, type Project } from "@/lib/model";
 import { useAddOn } from "@/lib/addon";
+import { UnlockButton } from "../UpgradeModal";
 
 /* Designs A16 / A17: anyone can read the code. Editing it and the terminal come with the
    Developer add-on (PRODUCT.md: "Free users see, paid users do"). */
@@ -64,7 +65,8 @@ export function CodeView({ project: p, file, update }: { project: Project; file?
             {!addOn ? (
               <>
                 {names.length} files · read-only.{" "}
-                <Link href="/settings" className="text-accent">Editing and the terminal come with the Developer add-on</Link>
+                Editing and the terminal come with the Developer add-on.{" "}
+                <UnlockButton className="font-medium text-accent">Unlock</UnlockButton>
               </>
             ) : locked ? (
               "Read-only while a step runs · editing unlocks after it"
