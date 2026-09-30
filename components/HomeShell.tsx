@@ -9,7 +9,7 @@ import { BottomTabs, SheetRow } from "./BottomTabs";
 import { Sheet } from "./Sheet";
 import { WorkspaceMenu } from "./WorkspaceMenu";
 import { DemoTourCard, DemoTourButton } from "./DemoTour";
-import { useViewer } from "@/lib/viewer-context";
+import { useCreditsUsed } from "@/lib/credits";
 
 /* Home, Projects, Agents and the account pages share this sidebar.
    Phone: the sidebar becomes a bottom tab bar, with the rest under "More". */
@@ -38,8 +38,7 @@ export function Logo() {
 
 export function HomeShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const viewer = useViewer();
-  const creditsUsed = viewer.kind === "demo" ? 74 : 0;
+  const creditsUsed = useCreditsUsed();
   const [more, setMore] = useState(false);
   const closeMore = useCallback(() => setMore(false), []);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");

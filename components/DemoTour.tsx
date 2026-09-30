@@ -6,11 +6,11 @@ import { Icon } from "./Icon";
 import { Sheet } from "./Sheet";
 import { useDismiss } from "./useDismiss";
 import { useViewer } from "@/lib/viewer-context";
-import { demoProject } from "@/lib/demo";
+import { DEMO_PROJECT_ID } from "@/lib/demo";
 
 /* The reviewer checklist: the five journeys, ticked once opened. Only shown in the demo. */
 
-const p = `/p/${demoProject.id}`;
+const p = `/p/${DEMO_PROJECT_ID}`;
 const journeys = [
   { key: "prompt", title: "Build from a prompt", detail: "Describe an app, refine it, read the plan, watch it build", href: "/home" },
   { key: "import", title: "Import a project", detail: "Bring in a GitHub repo and see what Architect makes of it", href: "/home" },

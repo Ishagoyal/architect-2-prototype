@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "../Icon";
-import type { Stage } from "@/lib/demo";
+import type { Stage } from "@/lib/model";
 
 /* Plan → Build → Test → Live, always visible. Each stage opens its view.
    Phone: only the current stage. */

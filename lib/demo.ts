@@ -1,58 +1,6 @@
 /* Made-up data for the clickable prototype. Nothing here is real usage. */
 
-export type Stage = "plan" | "build" | "test" | "live";
-
-export type Project = {
-  id: string;
-  name: string;
-  initial: string;
-  version: number;
-  savedAgo: string;
-  stage: Stage;
-  creditsUsed: number;
-  reviewOn: boolean;
-};
-
-export const demoProject: Project = {
-  id: "abhi-kya-banega",
-  name: "Abhi Kya Banega",
-  initial: "A",
-  version: 12,
-  savedAgo: "saved 2 min ago",
-  stage: "build",
-  creditsUsed: 12,
-  reviewOn: false,
-};
-
-/** "Continue where you left off" on Home (design A25). */
-export type ProjectCard = {
-  id: string;
-  name: string;
-  cover: string;
-  tone: "clay" | "blue" | "stone";
-  edited: string;
-  status: "Live" | "Building" | "Not built yet";
-};
-
-export const demoCards: ProjectCard[] = [
-  { id: "abhi-kya-banega", name: "Abhi Kya Banega", cover: "Abhi kya banega?", tone: "clay", edited: "Edited 2 hours ago", status: "Live" },
-  { id: "docs-support-agent", name: "Docs Support Agent", cover: "Help centre agent", tone: "blue", edited: "Edited yesterday", status: "Building" },
-  { id: "leave-request-bot", name: "Leave Request Bot", cover: "Leave requests", tone: "stone", edited: "Edited 3 days ago", status: "Not built yet" },
-];
-
-export function getProject(id: string): Project {
-  const card = demoCards.find((c) => c.id === id);
-  if (!card || card.id === demoProject.id) return demoProject;
-  return {
-    ...demoProject,
-    id: card.id,
-    name: card.name,
-    initial: card.name[0],
-    stage: card.status === "Not built yet" ? "plan" : "build",
-    version: card.status === "Not built yet" ? 1 : 4,
-    savedAgo: card.edited.replace("Edited", "saved"),
-  };
-}
+export const DEMO_PROJECT_ID = "abhi-kya-banega";
 
 /** Workspaces in the demo (design A26). */
 export const demoWorkspaces = [

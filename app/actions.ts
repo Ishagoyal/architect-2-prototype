@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/server";
 import { DEMO_COOKIE } from "@/lib/viewer";
-import { demoProject } from "@/lib/demo";
+import { DEMO_PROJECT_ID } from "@/lib/demo";
 
 export type AuthState = { error?: string; notice?: string } | undefined;
 
@@ -14,7 +14,7 @@ const NOT_SET_UP = "Accounts aren’t switched on in this preview yet. Try the d
 export async function startDemo() {
   const store = await cookies();
   store.set(DEMO_COOKIE, "1", { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
-  redirect(`/p/${demoProject.id}/app?tour=1`);
+  redirect(`/p/${DEMO_PROJECT_ID}/app?tour=1`);
 }
 
 export async function signOut() {
