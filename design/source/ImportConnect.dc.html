@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Architect 2.0 — Import, connect GitHub</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;background:#F6F4EF;color:#17171B}
+button,input,textarea,select{font-family:inherit}
+a{color:#B4470F}a:hover{color:#8A3409}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; background: #CFCBC2; font-family: 'Geist', system-ui, sans-serif; color: #17171B">
+<div role="dialog" aria-label="Import a project" style="width: 660px; box-sizing: border-box; background: #FFFFFF; border-radius: 22px; box-shadow: 0 24px 60px rgba(23,23,27,0.22); display: flex; flex-direction: column">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; padding: 26px 28px 18px 28px">
+<div style="display: flex; gap: 14px">
+<div style="width: 40px; height: 40px; border-radius: 11px; background: #F6F4EF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#17171B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="8" r="2"></circle><path d="M6 8 V16"></path><path d="M18 10 C18 14 12 13 6.5 16.5"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Import a project</h1>
+<p style="margin: 0; font-size: 14px; color: #55555E">Bring existing code and keep working on it in Architect.</p>
+</div>
+</div>
+<a href="Home.dc.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #17171B; text-decoration: none"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18"></path><path d="M18 6 L6 18"></path></svg></a>
+</div>
+<div style="padding: 0 28px">
+<div role="tablist" aria-label="Import source" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; background: #F6F4EF; border-radius: 12px">
+<button type="button" role="tab" aria-selected="true" style="height: 40px; border: 1px solid #E2DED4; border-radius: 9px; background: #FFFFFF; font-size: 14px; font-weight: 500; color: #17171B; cursor: pointer">GitHub</button>
+<button type="button" role="tab" aria-selected="false" style="height: 40px; border: 0; border-radius: 9px; background: transparent; font-size: 14px; color: #17171B; cursor: pointer">ZIP file</button>
+<button type="button" role="tab" aria-selected="false" style="height: 40px; border: 0; border-radius: 9px; background: transparent; font-size: 14px; color: #17171B; cursor: pointer">Lovable, Bolt, v0…</button>
+</div>
+</div>
+<div style="padding: 22px 28px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="ic-url" style="font-size: 14px; font-weight: 500">Public repository</label>
+<div style="display: flex; gap: 8px">
+<input id="ic-url" placeholder="owner/repo or https://github.com/owner/repo" style="flex-grow: 1; height: 46px; box-sizing: border-box; padding: 0 14px; border: 1px solid #DAD6CC; border-radius: 12px; font-size: 15px; background: #FFFFFF; color: #17171B">
+<button type="button" style="height: 46px; padding: 0 18px; border: 1px solid #DAD6CC; border-radius: 12px; background: #FFFFFF; font-size: 14px; font-weight: 500; color: #17171B; cursor: pointer">Use</button>
+</div>
+<span style="font-size: 12px; line-height: 1.45; color: #55555E">No account needed. We'll use the default branch unless you pick another.</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px"><div style="flex-grow: 1; height: 1px; background: #E2DED4"></div><span style="font-size: 13px; color: #55555E">or</span><div style="flex-grow: 1; height: 1px; background: #E2DED4"></div></div>
+<div style="padding: 20px; border: 1px solid #E2DED4; border-radius: 16px; background: #FBFAF7; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-start; gap: 12px">
+<div style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: #17171B; color: #F6F4EF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11 V8 C8 5.8 9.8 4 12 4 C14.2 4 16 5.8 16 8 V11"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Private repositories</span><span style="font-size: 13px; line-height: 1.45; color: #55555E">Connect your GitHub account to browse and import your private repos.</span></div>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px">
+<li style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1F6F4A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px"><path d="M5 12 L10 17 L19 7"></path></svg><span><span style="font-weight: 500">You choose what Architect can see:</span> all repositories, or only the ones you select.</span></li>
+<li style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1F6F4A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px"><path d="M5 12 L10 17 L19 7"></path></svg><span>Change access or disconnect anytime in Settings.</span></li>
+</ul>
+<div style="display: flex; align-items: center; gap: 14px">
+<a href="Import.dc.html" style="height: 46px; padding: 0 20px; display: flex; align-items: center; gap: 8px; background: #17171B; color: #F6F4EF; border-radius: 12px; font-size: 14px; font-weight: 500; text-decoration: none">Connect GitHub<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4 H20 V10"></path><path d="M20 4 L11 13"></path><path d="M18 14 V20 H4 V6 H10"></path></svg></a>
+<span style="font-size: 12px; color: #55555E">Opens GitHub in a new window to approve access.</span>
+</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: flex-end; padding: 16px 28px 22px 28px; border-top: 1px solid #E2DED4">
+<a href="Home.dc.html" style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 12px; font-size: 14px; font-weight: 500; color: #17171B; text-decoration: none">Cancel</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

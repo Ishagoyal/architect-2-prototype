@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Architect 2.0 — Refine, Developer view</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;background:#F6F4EF;color:#17171B}
+button,input,textarea,select{font-family:inherit}
+a{color:#B4470F}a:hover{color:#8A3409}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1240px; display: flex; background: #F6F4EF; font-family: 'Geist', system-ui, sans-serif; color: #17171B">
+<nav aria-label="Main" style="width: 248px; flex-shrink: 0; box-sizing: border-box; padding: 20px 14px 16px; background: #EEEBE3; border-right: 1px solid #E2DED4; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px 8px"><div style="width: 32px; height: 32px; border-radius: 9px; background: #17171B; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F6F4EF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L12 4 L20 20"></path><path d="M8 13 H16"></path></svg></div><div style="display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 15px">Architect</span><span style="font-size: 11px; color: #55555E">by Lyzr</span></div></div><a href="HomeWorkspace.dc.html" aria-expanded="false" style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 12px; margin-bottom: 14px; background: #FFFFFF; border: 1px solid #E2DED4; box-sizing: border-box; border-radius: 10px; font-size: 13px; color: #17171B; text-decoration: none"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 6px; background: #B4470F; color: #FFFFFF; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">I</span>Isha’s workspace</span><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg></a><a href="HomeReturning.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; background: #FFFFFF; font-weight: 500;"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 4 L21 11"></path><path d="M5 10 V20 H19 V10"></path></svg>Home</a><a href="Projects.dc.html" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 H9 L11 9 H21 V19 H3 Z"></path></svg>Projects</a><a href="HomeAgents.dc.html" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="11" rx="3"></rect><path d="M12 4 V8"></path><path d="M9.5 13 H9.6"></path><path d="M14.5 13 H14.6"></path></svg>Agents</a><a href="#" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M15 9 L13 13 L9 15 L11 11 Z"></path></svg>Explore</a><a href="#" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5 C9.5 8 10.6 7 12 7 C13.4 7 14.5 8 14.5 9.3 C14.5 11 12 11.2 12 13"></path><path d="M12 16.5 H12.01"></path></svg>Help & Learn</a>
+<div style="flex-grow: 1"></div>
+<a href="Usage.dc.html" title="Your credits this month. Click to see where they went." style="display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 4px 8px 4px 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="7" ry="3"></ellipse><path d="M5 7 V17 C5 18.7 8.1 20 12 20 C15.9 20 19 18.7 19 17 V7"></path><path d="M5 12 C5 13.7 8.1 15 12 15 C15.9 15 19 13.7 19 12"></path></svg><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">Credits<span style="font-size: 11.5px; font-weight: 500; color: #1F6F4A; white-space: nowrap">On track · 0% used</span></span></a><a href="Account.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; text-decoration: none; color: #17171B; font-size: 14px; "><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7 H20"></path><path d="M4 17 H20"></path><circle cx="9" cy="7" r="2.2" fill="currentColor"></circle><circle cx="15" cy="17" r="2.2" fill="currentColor"></circle></svg>Settings</a><div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 12px 0 0 8px; margin-top: 6px; border-top: 1px solid #E2DED4"><div style="display: flex; align-items: center; gap: 10px; min-width: 0; color: #17171B"><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #17171B; color: #F6F4EF; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">IG</span><span style="display: flex; flex-direction: column"><span style="font-size: 13px; white-space: nowrap">Isha Goyal</span></span></div><button type="button" aria-label="Switch to dark mode" title="Switch to dark mode" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; background: transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #17171B"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5 A8 8 0 1 1 9.5 4 A6.5 6.5 0 0 0 20 14.5 Z"></path></svg></button></div><div style="padding: 4px 0 0 50px"><a href="Account.dc.html" title="You’re seeing code, agent files and cost per step. Click to change." style="align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; padding: 2px 7px; border-radius: 999px; background: #17171B; color: #F6F4EF; font-size: 11px; font-weight: 500; text-decoration: none; white-space: nowrap">Developer view <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18"></path><path d="M18 6 L6 18"></path></svg></a></div>
+</nav>
+<main style="flex-grow: 1; box-sizing: border-box; padding: 36px 56px 36px 56px; display: flex; flex-direction: column; gap: 26px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Home.dc.html" style="display: flex; align-items: center; gap: 8px; height: 44px; font-size: 14px; font-weight: 500; color: #17171B; text-decoration: none"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"></path><path d="M11 6 L5 12 L11 18"></path></svg>Back to prompt</a>
+<ol aria-label="Progress" style="margin: 0; padding: 0; list-style: none; display: flex; align-items: center; gap: 10px; font-size: 13px">
+<li style="display: flex; align-items: center; gap: 6px; color: #1F6F4A"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 L10 17 L19 7"></path></svg>Describe</li>
+<li aria-hidden="true" style="width: 24px; height: 1px; background: #DAD6CC"></li>
+<li aria-current="step" style="padding: 6px 12px; border-radius: 999px; background: #17171B; color: #F6F4EF; font-weight: 500">Refine</li>
+<li aria-hidden="true" style="width: 24px; height: 1px; background: #DAD6CC"></li>
+<li style="color: #55555E">Plan</li>
+<li aria-hidden="true" style="width: 24px; height: 1px; background: #DAD6CC"></li>
+<li style="color: #55555E">Build</li>
+</ol>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 46px; line-height: 1.05">Here's what we understood</h1>
+<p style="margin: 0; font-size: 16px; color: #55555E">Check the details and change anything. Every field is optional.</p>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 28px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="padding: 16px 20px; background: #EEEBE3; border-radius: 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 500; color: #55555E; text-transform: uppercase; letter-spacing: 0.06em">You said</span>
+<p style="margin: 0; font-size: 15px; line-height: 1.55; color: #17171B">Build an app for Indian households with a cook. The family updates what's in the kitchen in Hinglish or with photos, and it suggests three meals we can make right now.</p>
+</div>
+<a href="Home.dc.html" style="font-size: 13px; font-weight: 500; color: #B4470F; text-decoration: none; padding: 4px 0; white-space: nowrap">Edit prompt</a>
+</div>
+<div style="padding: 28px; background: #FFFFFF; border: 1px solid #E2DED4; border-radius: 18px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between"><label for="rf-name" style="font-size: 14px; font-weight: 500">Project name</label><span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #2A57C9; background: #E8EEFB; padding: 3px 9px; border-radius: 999px"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.8 10.2 L21 12 L13.8 13.8 L12 21 L10.2 13.8 L3 12 L10.2 10.2 Z"></path></svg>AI-filled</span></div>
+<input id="rf-name" value="Abhi Kya Banega" style="height: 46px; box-sizing: border-box; padding: 0 14px; border: 1px solid #DAD6CC; border-radius: 12px; font-size: 15px; background: #FFFFFF; color: #17171B">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between"><label for="rf-what" style="font-size: 14px; font-weight: 500">What should it do?</label><span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #2A57C9; background: #E8EEFB; padding: 3px 9px; border-radius: 999px"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.8 10.2 L21 12 L13.8 13.8 L12 21 L10.2 13.8 L3 12 L10.2 10.2 Z"></path></svg>AI-filled</span></div>
+<textarea id="rf-what" style="height: 92px; box-sizing: border-box; padding: 12px 14px; border: 1px solid #DAD6CC; border-radius: 12px; font-size: 15px; line-height: 1.5; resize: none; background: #FFFFFF; color: #17171B">Suggests three complete Indian meals from what's in the kitchen right now, using inventory updates the family sends in Hinglish or as photos.</textarea>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between"><label for="rf-user" style="font-size: 14px; font-weight: 500">Target user <span style="font-weight: 400; color: #55555E">· optional</span></label><span style="font-size: 12px; color: #55555E">Not in your prompt</span></div>
+<textarea id="rf-user" placeholder="e.g. Families who cook at home with help from a cook" style="height: 64px; box-sizing: border-box; padding: 12px 14px; border: 1px dashed #CFCBC2; border-radius: 12px; font-size: 15px; line-height: 1.5; resize: none; background: #FBFAF7; color: #17171B"></textarea>
+<button type="button" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 4px 0; font-size: 13px; font-weight: 500; color: #B4470F; cursor: pointer"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.8 10.2 L21 12 L13.8 13.8 L12 21 L10.2 13.8 L3 12 L10.2 10.2 Z"></path></svg>Suggest for me</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between"><label for="rf-desc" style="font-size: 14px; font-weight: 500">Description / instructions</label><span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #2A57C9; background: #E8EEFB; padding: 3px 9px; border-radius: 999px"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.8 10.2 L21 12 L13.8 13.8 L12 21 L10.2 13.8 L3 12 L10.2 10.2 Z"></path></svg>AI-filled</span></div>
+<textarea id="rf-desc" style="height: 92px; box-sizing: border-box; padding: 12px 14px; border: 1px solid #DAD6CC; border-radius: 12px; font-size: 15px; line-height: 1.5; resize: none; background: #FFFFFF; color: #17171B">Don't repeat a dish within three days. Keep meals practical for a home cook. Make the day's plan easy to share on WhatsApp.</textarea>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="padding: 18px; background: #FFFFFF; border: 1px solid #E2DED4; border-radius: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 14px; font-weight: 600">App type</span><span style="font-size: 12px; color: #55555E">Detected from your prompt</span></div>
+<div role="radiogroup" aria-label="App type" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; background: #F6F4EF; border-radius: 12px">
+<button type="button" role="radio" aria-checked="true" style="height: 38px; border: 1px solid #E2DED4; border-radius: 9px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #17171B; cursor: pointer">Website</button>
+<button type="button" role="radio" aria-checked="false" style="height: 38px; border: 0; border-radius: 9px; background: transparent; font-size: 13px; color: #17171B; cursor: pointer">Phone app</button>
+</div>
+</div>
+<div style="padding: 18px; background: #FFFBF8; border: 1px solid #EBCDB8; border-radius: 16px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: flex-start; gap: 12px; padding-bottom: 10px">
+<div style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: #FBEDE4; color: #8A3409; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="11" rx="3"></rect><path d="M12 4 V8"></path><path d="M9.5 13 H9.6"></path><path d="M14.5 13 H14.6"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Your app uses an AI model</span><span style="font-size: 13px; line-height: 1.45; color: #55555E">For suggesting three meals from what's in the kitchen</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid #F0DDD0">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 12px; font-weight: 500; color: #55555E; text-transform: uppercase; letter-spacing: 0.06em">Agent</span><button type="button" style="border: 0; background: transparent; font-size: 13px; font-weight: 500; color: #B4470F; cursor: pointer; padding: 4px 0">Use one of my agents</button></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 14px; font-weight: 500">New agent</span><span style="font-size: 11px; font-weight: 500; color: #8A3409; background: #FBEDE4; padding: 2px 8px; border-radius: 999px">Auto</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid #F0DDD0">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 12px; font-weight: 500; color: #55555E; text-transform: uppercase; letter-spacing: 0.06em">Framework</span><span title="Only in Developer view" style="font-size: 11px; font-weight: 500; color: #2A57C9; background: #E8EEFB; padding: 2px 8px; border-radius: 999px; text-transform: none; letter-spacing: 0">Developer view</span></div>
+<select aria-label="Framework" style="height: 40px; box-sizing: border-box; padding: 0 10px; border: 1px solid #DAD6CC; border-radius: 10px; background: #FFFFFF; font-size: 14px; color: #17171B"><option selected>Lyzr (recommended)</option><option>LangGraph</option><option>CrewAI</option><option>OpenAI Agents SDK</option><option>Vercel AI SDK</option></select>
+<span style="font-size: 12px; line-height: 1.45; color: #55555E">The agent is saved as files in your code, in the framework you pick.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 0 0 0; border-top: 1px solid #F0DDD0">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 12px; font-weight: 500; color: #55555E; text-transform: uppercase; letter-spacing: 0.06em">Model</span><span title="Only in Developer view" style="font-size: 11px; font-weight: 500; color: #2A57C9; background: #E8EEFB; padding: 2px 8px; border-radius: 999px; text-transform: none; letter-spacing: 0">Developer view</span></div>
+<select aria-label="Model" style="height: 40px; box-sizing: border-box; padding: 0 10px; border: 1px solid #DAD6CC; border-radius: 10px; background: #FFFFFF; font-size: 14px; color: #17171B"><option>Auto (recommended)</option><option selected>gpt-4.1-mini · OpenAI</option><option>gpt-4.1 · OpenAI</option><option>claude-sonnet · Anthropic</option><option>claude-haiku · Anthropic</option><option>gemini-2.5-flash · Google</option></select>
+<span style="font-size: 12px; line-height: 1.45; color: #55555E">Picking an exact model is part of the Developer add-on.</span>
+</div>
+</div>
+<div style="padding: 18px; background: #FFFFFF; border: 1px solid #E2DED4; border-radius: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 14px; font-weight: 600">Theme</span><button type="button" style="border: 0; background: transparent; font-size: 13px; font-weight: 500; color: #B4470F; cursor: pointer; padding: 4px 0">Change</button></div>
+<div style="display: flex; align-items: center; gap: 12px">
+<div aria-hidden="true" style="display: flex; gap: 4px"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFF6EA; border: 1px solid #E2DED4"></span><span style="width: 22px; height: 22px; border-radius: 50%; background: #F4DDC0"></span><span style="width: 22px; height: 22px; border-radius: 50%; background: #C8663B"></span><span style="width: 22px; height: 22px; border-radius: 50%; background: #2F4A3A"></span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; font-weight: 500; color: #8A3409; background: #FBEDE4; padding: 2px 8px; border-radius: 999px">Auto</span><span style="font-size: 14px; font-weight: 500">Warm and friendly</span></div>
+</div>
+<span style="font-size: 12px; line-height: 1.45; color: #55555E">Your users are households cooking together.</span>
+</div>
+<div style="padding: 16px 18px; background: #FFFFFF; border: 1px solid #E2DED4; border-radius: 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 14px; font-weight: 600">Cost</span><span style="font-size: 13px; color: #1F6F4A">On track · 0% used</span></div>
+<span style="font-size: 12px; line-height: 1.45; color: #55555E">Shown after each step, as a share of this month’s credits.</span>
+</div>
+</div>
+</div>
+<div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 22px; border-top: 1px solid #E2DED4">
+<a href="Home.dc.html" style="height: 48px; padding: 0 20px; display: flex; align-items: center; border: 1px solid #DAD6CC; border-radius: 12px; font-size: 15px; font-weight: 500; color: #17171B; text-decoration: none; background: #FFFFFF">Back to prompt</a>
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="font-size: 13px; color: #55555E">Nothing is built until you approve the plan.</span>
+<a href="WorkPlan.dc.html" style="height: 48px; padding: 0 22px; display: flex; align-items: center; gap: 8px; background: #17171B; color: #F6F4EF; border-radius: 12px; font-size: 15px; font-weight: 500; text-decoration: none">Confirm and see the plan<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19"></path><path d="M13 6 L19 12 L13 18"></path></svg></a>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

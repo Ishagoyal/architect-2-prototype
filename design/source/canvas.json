@@ -1,0 +1,770 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Account.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S2 · Account settings",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Home.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A3 · Home",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "HomeDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S3 · Dark · Home",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "HomeImported.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B6 · Later: back on Home, setup not finished",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "HomeModel.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A4 · Home · builder model",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "HomePlus.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B1 · Home · + menu",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "HomeReturning.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A25 · Home · returning user",
+      "w": 1440,
+      "x": 0,
+      "y": 5720
+    },
+    "Import.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B3 · Pick the repo",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "ImportConnect.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B2 · Connect GitHub",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "ImportKeys.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B4 · Passwords and keys",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "ImportPlan.dc.html": {
+      "h": 2480,
+      "is_interactive": true,
+      "page": "b",
+      "title": "B5 · Here’s what we think your app does (same design as the plan)",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A1 · Sign up",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Onboarding.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A2 · Onboarding",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Refine.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A5 · Refine",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "RefineDev.dc.html": {
+      "h": 1240,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A6 · Refine · Developer view",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "Usage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S1 · Credits and usage",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "WorkAgents.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C1 · Agent (plain words)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "WorkAskCatch.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A12 · Ask mode catches a change",
+      "w": 1440,
+      "x": 7600,
+      "y": 1820
+    },
+    "WorkBuilding.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A11 · Building (step 3 result)",
+      "w": 1440,
+      "x": 6080,
+      "y": 1820
+    },
+    "WorkBuildingDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S4 · Dark · Building (the app keeps its own colours)",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "WorkChatPlus.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A9 · Chat · + menu",
+      "w": 1440,
+      "x": 3040,
+      "y": 1820
+    },
+    "WorkCode.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A17 · Code · Developer view",
+      "w": 1440,
+      "x": 6080,
+      "y": 3120
+    },
+    "WorkCodeDark.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S5 · Dark · Code",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "WorkCodeLocked.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A16 · Code read-only while a step runs",
+      "w": 1440,
+      "x": 4560,
+      "y": 3120
+    },
+    "WorkDatabase.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A24 · Database · test data (a copy you can change)",
+      "w": 1440,
+      "x": 7600,
+      "y": 4420
+    },
+    "WorkDeploy.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "e",
+      "title": "E1 · Going live",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "WorkDevSwitch.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A14 · Developer view on mid-build",
+      "w": 1440,
+      "x": 1520,
+      "y": 3120
+    },
+    "WorkLive.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "e",
+      "title": "E2 · Live ✓",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "WorkModel.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A10 · Chat · builder model",
+      "w": 1440,
+      "x": 4560,
+      "y": 1820
+    },
+    "WorkPlan.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7 · Plan · summary (a plan change waiting)",
+      "w": 1440,
+      "x": 0,
+      "y": 1820
+    },
+    "WorkPlanDev.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A8 · Plan · Developer view (same screen, more detail)",
+      "w": 1440,
+      "x": 1520,
+      "y": 1820
+    },
+    "WorkReview.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A15 · Step waiting · Developer view",
+      "w": 1440,
+      "x": 3040,
+      "y": 3120
+    },
+    "WorkSelect.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A13 · Select to change · phone",
+      "w": 1440,
+      "x": 0,
+      "y": 3120
+    },
+    "WorkSettings.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "d",
+      "title": "D3 · Changes on GitHub · Get latest",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "WorkStop.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A18 · Stop",
+      "w": 1440,
+      "x": 7600,
+      "y": 3120
+    },
+    "WorkStopDev.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A19 · Stopped · Developer view",
+      "w": 1440,
+      "x": 0,
+      "y": 4420
+    },
+    "WorkStuck.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A20 · Couldn't fix in 3 tries",
+      "w": 1440,
+      "x": 1520,
+      "y": 4420
+    },
+    "WorkTests.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A21 · Tests",
+      "w": 1440,
+      "x": 3040,
+      "y": 4420
+    },
+    "WorkVersions.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A22 · Versions",
+      "w": 1440,
+      "x": 4560,
+      "y": 4420
+    },
+    "WorkVersionsDev.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A23 · Versions · Developer view",
+      "w": 1440,
+      "x": 6080,
+      "y": 4420
+    },
+    "WorkAgentsDev.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C2 · Agent · Developer view (same screen, more detail)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "WorkAgentFiles.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C3 · Agent as files · Try it · traces",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "WorkWorkflow.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C4 · Workflow · 9 PM automation (a step failed)",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "WorkAgentImported.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C5 · Imported LangGraph agent (CookBridge)",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "WorkSettingsAI.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C6 · Your app's AI · who pays and limits",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "GitConnect.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "d",
+      "title": "D1 · Connect GitHub · choose repos",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "GitMove.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "d",
+      "title": "D2 · Move to my GitHub",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "GitClash.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "d",
+      "title": "D4 · Same lines changed in both places",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "WorkLiveFailed.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "e",
+      "title": "E3 · Live check failed · previous version kept",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "WorkDeployLatest.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "e",
+      "title": "E4 · Deploy latest changes",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "WorkPlanFull.dc.html": {
+      "h": 2820,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.1 · Plan · full plan (read the whole plan)",
+      "w": 1440,
+      "x": 9120,
+      "y": 1820
+    },
+    "WorkPlanEdit.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.2 · Plan · editing",
+      "w": 1440,
+      "x": 10640,
+      "y": 1820
+    },
+    "WorkPlanSaved.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.3 · Plan · saved, steps and checks updated",
+      "w": 1440,
+      "x": 12160,
+      "y": 1820
+    },
+    "WorkPlanDownload.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.4 · Plan · download (PDF, Word, Markdown)",
+      "w": 1440,
+      "x": 13680,
+      "y": 1820
+    },
+    "WorkSettingsTeam.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "s",
+      "title": "S6 · Project settings · Team and review",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "HomeWorkspace.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A26 · Home · workspace menu",
+      "w": 1440,
+      "x": 1520,
+      "y": 5720
+    },
+    "Projects.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A27 · Projects",
+      "w": 1440,
+      "x": 3040,
+      "y": 5720
+    },
+    "HomeAgents.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A28 · Agents (all projects)",
+      "w": 1440,
+      "x": 4560,
+      "y": 5720
+    },
+    "WorkPlanStep.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.5 · Plan · a step’s details",
+      "w": 1440,
+      "x": 15200,
+      "y": 1820
+    },
+    "WorkPlanStepDev.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.6 · Plan · a step’s details · Developer view",
+      "w": 1440,
+      "x": 16720,
+      "y": 1820
+    },
+    "WorkPlanConfirm.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A7.7 · Confirm while a suggestion waits",
+      "w": 1440,
+      "x": 18240,
+      "y": 1820
+    },
+    "WorkVersionsMenu.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A22.1 · Recent versions (from the top bar)",
+      "w": 1440,
+      "x": 10640,
+      "y": 4420
+    },
+    "WorkDatabaseLive.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "a",
+      "title": "A24.1 · Database · live data (view only)",
+      "w": 1440,
+      "x": 12160,
+      "y": 4420
+    },
+    "WorkAgentNew.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C7.1 · Add an agent · Developer view (build it in code)",
+      "w": 1440,
+      "x": 10640,
+      "y": 0
+    },
+    "WorkAgentCrew.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C8 · A CrewAI crew (Leave Request Bot)",
+      "w": 1440,
+      "x": 12160,
+      "y": 0
+    },
+    "WorkGitChanges.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "d",
+      "title": "D5 · New changes on GitHub while you work",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "WorkAgentAdd.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "page": "c",
+      "title": "C7 · Add an agent (bring in one you already have)",
+      "w": 1440,
+      "x": 9120,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-25T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "a",
+    "view": "canvas"
+  },
+  "notes": {
+    "t_a": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "a",
+      "text": "A · Build by prompting",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_b": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "b",
+      "text": "B · Import a project",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_c": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "c",
+      "text": "C · Agents in any framework",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_d": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "d",
+      "text": "D · Connect GitHub",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_e": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "e",
+      "text": "E · Deploy",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t_s": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "s",
+      "text": "Settings, usage and dark mode",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Onboarding.dc.html",
+    "Home.dc.html",
+    "HomeModel.dc.html",
+    "Refine.dc.html",
+    "RefineDev.dc.html",
+    "WorkPlan.dc.html",
+    "WorkPlanFull.dc.html",
+    "WorkPlanEdit.dc.html",
+    "WorkPlanSaved.dc.html",
+    "WorkPlanDownload.dc.html",
+    "WorkPlanStep.dc.html",
+    "WorkPlanStepDev.dc.html",
+    "WorkPlanConfirm.dc.html",
+    "WorkPlanDev.dc.html",
+    "WorkChatPlus.dc.html",
+    "WorkModel.dc.html",
+    "WorkBuilding.dc.html",
+    "WorkAskCatch.dc.html",
+    "WorkSelect.dc.html",
+    "WorkDevSwitch.dc.html",
+    "WorkReview.dc.html",
+    "WorkCodeLocked.dc.html",
+    "WorkCode.dc.html",
+    "WorkStop.dc.html",
+    "WorkStopDev.dc.html",
+    "WorkStuck.dc.html",
+    "WorkTests.dc.html",
+    "WorkVersionsMenu.dc.html",
+    "WorkVersions.dc.html",
+    "WorkVersionsDev.dc.html",
+    "WorkDatabase.dc.html",
+    "WorkDatabaseLive.dc.html",
+    "HomeReturning.dc.html",
+    "HomeWorkspace.dc.html",
+    "Projects.dc.html",
+    "HomeAgents.dc.html",
+    "HomePlus.dc.html",
+    "ImportConnect.dc.html",
+    "Import.dc.html",
+    "ImportKeys.dc.html",
+    "ImportPlan.dc.html",
+    "HomeImported.dc.html",
+    "WorkAgents.dc.html",
+    "Usage.dc.html",
+    "Account.dc.html",
+    "HomeDark.dc.html",
+    "WorkBuildingDark.dc.html",
+    "WorkCodeDark.dc.html",
+    "WorkAgentsDev.dc.html",
+    "WorkAgentFiles.dc.html",
+    "WorkWorkflow.dc.html",
+    "WorkAgentImported.dc.html",
+    "WorkSettingsAI.dc.html",
+    "WorkAgentAdd.dc.html",
+    "WorkAgentNew.dc.html",
+    "WorkAgentCrew.dc.html",
+    "GitConnect.dc.html",
+    "GitMove.dc.html",
+    "WorkSettings.dc.html",
+    "GitClash.dc.html",
+    "WorkGitChanges.dc.html",
+    "WorkDeploy.dc.html",
+    "WorkLive.dc.html",
+    "WorkLiveFailed.dc.html",
+    "WorkDeployLatest.dc.html",
+    "WorkSettingsTeam.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "a",
+      "name": "A · Build by prompting"
+    },
+    {
+      "id": "b",
+      "name": "B · Import a project"
+    },
+    {
+      "id": "c",
+      "name": "C · Agents in any framework"
+    },
+    {
+      "id": "d",
+      "name": "D · Connect GitHub"
+    },
+    {
+      "id": "e",
+      "name": "E · Deploy"
+    },
+    {
+      "id": "s",
+      "name": "Settings, usage and dark mode"
+    }
+  ],
+  "title": "Architect 2.0 — Designs"
+}
