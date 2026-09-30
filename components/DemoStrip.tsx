@@ -17,6 +17,7 @@ export function DemoStrip() {
         onSubmit={() => {
           try {
             localStorage.removeItem("architect.projects.demo");
+            localStorage.removeItem("architect.projects.demo2");
             localStorage.removeItem("architect.tour");
             localStorage.removeItem("architect.tour.active");
           } catch {

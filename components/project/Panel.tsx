@@ -52,7 +52,7 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
     needs.push({
       id: "waiting",
       title: `Step ${project.stepsDone} (${lowerFirst(done.title)}) is ready`,
-      lines: [`All ${done.checks.length} checks passed · review is on, so step ${project.stepsDone + 1} waits for you`],
+      lines: [`All ${done.checks.length} checks passed · ${project.reviewOn ? "review is on, so " : ""}step ${project.stepsDone + 1} waits for you`],
       actions: [
         { label: "Continue", primary: true, onClick: () => update((p) => continueBuild(p)) },
         { label: "What changed", href: `${base}/versions?v=${project.versions[0].n}` },

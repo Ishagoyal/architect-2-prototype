@@ -50,7 +50,7 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
     if (!picked.includes(repo)) setRepo(picked[0] ?? repos[0]);
   };
   const doImport = () => {
-    const p = importedProject(`${handle}/${repo}`);
+    const p = { ...importedProject(`${handle}/${repo}`), stepByStep: viewer.kind === "demo" };
     add(p);
     setDevView(true);
     onClose();

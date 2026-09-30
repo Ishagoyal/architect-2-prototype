@@ -7,6 +7,7 @@ import { Icon } from "./Icon";
 import { DevOnly, DevTag } from "./DevTag";
 import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
+import { useViewer } from "@/lib/viewer-context";
 import { createProject, detectAppType, instructionsFromIdea, isMealIdea, nameFromIdea, needsAI, suggestTarget, whatFromIdea } from "@/lib/model";
 
 /* Design A5 (and A6 in Developer view). Shows what the planner understood; nothing is built yet. */
@@ -51,6 +52,7 @@ export function Refine({ idea }: { idea: string }) {
   const router = useRouter();
   const { add } = useProjects();
   const credits = useCreditsUsed();
+  const viewer = useViewer();
   const meal = isMealIdea(idea);
   const [name, setName] = useState(() => nameFromIdea(idea));
   const [what, setWhat] = useState(() => whatFromIdea(idea));
@@ -64,7 +66,7 @@ export function Refine({ idea }: { idea: string }) {
 
   const confirm = () => {
     setBusy(true);
-    const p = createProject({ idea, name, what, target, instructions, appType, theme, withAI });
+    const p = { ...createProject({ idea, name, what, target, instructions, appType, theme, withAI }), stepByStep: viewer.kind === "demo" };
     add(p);
     router.push(`/p/${p.id}/plan`);
   };

@@ -22,7 +22,9 @@ type Ctx = {
 const ProjectsContext = createContext<Ctx | null>(null);
 
 /** One browser copy per person: "demo", or the signed-in account's id. */
-const keyFor = (owner: string) => `architect.projects.${owner === "demo" ? "demo" : `account.${owner}`}`;
+// "demo2": the demo now starts fully built, so older browser copies of the demo are left behind.
+export const DEMO_STORAGE_KEY = "architect.projects.demo2";
+const keyFor = (owner: string) => (owner === "demo" ? DEMO_STORAGE_KEY : `architect.projects.account.${owner}`);
 
 function readLocal(owner: string): Project[] | null {
   try {
