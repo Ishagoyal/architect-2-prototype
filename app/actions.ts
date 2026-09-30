@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/server";
 import { DEMO_COOKIE } from "@/lib/viewer";
-import { DEMO_PROJECT_ID } from "@/lib/demo";
+import { supabaseKey, supabaseUrl } from "@/lib/supabase/config";
 
 export type AuthState = { error?: string; notice?: string } | undefined;
 
@@ -68,15 +68,28 @@ export async function continueWith(_: AuthState, form: FormData): Promise<AuthSt
   const provider = form.get("provider") === "github" ? "github" : "google";
   const supabase = await getSupabase();
   if (!supabase) return { error: NOT_SET_UP };
+  const name = provider === "google" ? "Google" : "GitHub";
+  const off = { error: `Signing in with ${name} isn’t switched on yet. Use your email instead.` };
+  // Supabase sends people to a raw error page if the provider is off, so ask first.
+  if (!(await providerOn(provider))) return off;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo: `${await origin()}/auth/callback` },
   });
-  if (error || !data.url) {
-    const name = provider === "google" ? "Google" : "GitHub";
-    return { error: `Signing in with ${name} isn’t switched on yet. Use your email instead.` };
-  }
+  if (error || !data.url) return off;
   redirect(data.url);
+}
+
+/** Whether Google or GitHub sign-in is switched on in Supabase (Authentication → Sign In / Providers). */
+async function providerOn(provider: "google" | "github") {
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/settings`, { headers: { apikey: supabaseKey }, next: { revalidate: 60 } });
+    if (!res.ok) return true; // can't tell; let Supabase decide
+    const settings = (await res.json()) as { external?: Record<string, boolean> };
+    return settings.external?.[provider] !== false;
+  } catch {
+    return true;
+  }
 }
 
 export async function saveOnboarding(form: FormData): Promise<AuthState> {
