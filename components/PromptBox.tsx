@@ -1,23 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "./Icon";
+import { BuilderMenu } from "./project/Panel";
 
 /* The big "Describe your app" box on Home. Sending it opens Refine (step 3 of the build plan). */
-export function PromptBox({ heading, ideas }: { heading: string; ideas: string[] }) {
-  const [text, setText] = useState("");
+export function PromptBox({ heading, ideas, initial = "" }: { heading: string; ideas: string[]; initial?: string }) {
+  const [text, setText] = useState(initial);
+  const router = useRouter();
+  const go = () => {
+    if (text.trim()) router.push(`/new?idea=${encodeURIComponent(text.trim())}`);
+  };
   const empty = text.trim() === "";
   return (
     <>
       <form
-        onSubmit={(e) => e.preventDefault()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          go();
+        }}
         className="mt-7 flex flex-col gap-4 rounded-[18px] border border-line-strong bg-panel p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]"
       >
         <textarea
           aria-label="Describe your app"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              go();
+            }
+          }}
           placeholder="Describe your app — e.g. an agent that answers customer questions from our help docs"
           rows={3}
           className="min-h-[72px] resize-none border-0 bg-transparent p-0 text-base leading-normal outline-none placeholder:text-ink-3 md:text-[17px]"
@@ -31,14 +46,7 @@ export function PromptBox({ heading, ideas }: { heading: string; ideas: string[]
             >
               <Icon name="plus" size={16} strokeWidth={2} />
             </button>
-            <button
-              type="button"
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-accent-soft px-3 text-[13px] font-medium text-accent-strong"
-            >
-              <Icon name="sparkle" size={13} strokeWidth={2} />
-              Builder: Auto
-              <Icon name="chevronDown" size={12} strokeWidth={2} />
-            </button>
+            <BuilderMenu size="md" placement="down" />
           </div>
           <div className="flex items-center gap-2">
             <button

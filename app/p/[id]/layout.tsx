@@ -1,5 +1,5 @@
 import { ProjectShell } from "@/components/project/ProjectShell";
-import { getProject } from "@/lib/demo";
+import { ProjectsProvider } from "@/lib/projects";
 import { requireViewer } from "@/lib/require-viewer";
 import { ViewerProvider } from "@/lib/viewer-context";
 
@@ -13,7 +13,9 @@ export default async function Layout({
   const [{ id }, viewer] = await Promise.all([params, requireViewer()]);
   return (
     <ViewerProvider viewer={viewer}>
-      <ProjectShell project={getProject(id)}>{children}</ProjectShell>
+      <ProjectsProvider kind={viewer.kind}>
+        <ProjectShell id={id}>{children}</ProjectShell>
+      </ProjectsProvider>
     </ViewerProvider>
   );
 }

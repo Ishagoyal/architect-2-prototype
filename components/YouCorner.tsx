@@ -110,7 +110,18 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
             <Icon name="settings" size={15} />
             Account settings
           </Link>
-          <form action={signOut}>
+          <form
+            action={signOut}
+            onSubmit={() => {
+              if (viewer.kind !== "demo") return;
+              try {
+                localStorage.removeItem("architect.projects.demo");
+                localStorage.removeItem("architect.tour");
+              } catch {
+                /* nothing to clear */
+              }
+            }}
+          >
             <button
               type="submit"
               role="menuitem"
