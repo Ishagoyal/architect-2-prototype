@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "./Icon";
@@ -126,12 +125,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
         </div>
       </form>
 
-      <div className="mt-8 flex items-center justify-between text-[13px]">
-        <span className="text-ink-2">{heading}</span>
-        <Link href="/explore" className="font-medium text-accent hover:text-accent-strong">
-          Browse templates →
-        </Link>
-      </div>
+      <div className="mt-8 text-[13px] text-ink-2">{heading}</div>
       <div className="mt-3 flex flex-col items-start gap-2">
         {ideas.map((idea) => (
           <button
