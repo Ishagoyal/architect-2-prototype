@@ -7,7 +7,7 @@ import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useDismiss } from "../useDismiss";
 import { useProjectUI } from "../project/ProjectUI";
 import { send } from "@/lib/chat";
-import { lowerFirst, planTotals, startBuild, stopBuild, STEP_MS, type Project, type Step } from "@/lib/model";
+import { continueBuild, lowerFirst, planTotals, startBuild, stopBuild, STEP_MS, type Project, type Step } from "@/lib/model";
 import { usePrefs } from "@/lib/prefs";
 
 /* Designs A11, A13, A18: the App tab. While it builds, it shows each step's result, not a spinner.
@@ -37,8 +37,8 @@ function progress(p: Project, now: number) {
   const doneKind = (k: Step["kind"]) => p.plan.steps.some((s, i) => s.kind === k && i < p.stepsDone);
   const aiIndex = p.plan.steps.findIndex((s) => s.kind === "ai");
   const itemsVisible =
-    aiIndex >= 0 ? p.stepsDone > aiIndex || (cur?.kind === "ai" && frac > 0.3) : p.stepsDone >= 1;
-  const buttonVisible = doneKind("screens") || (cur?.kind === "screens" && frac > 0.5);
+    !!p.imported || (aiIndex >= 0 ? p.stepsDone > aiIndex || (cur?.kind === "ai" && frac > 0.3) : p.stepsDone >= 1);
+  const buttonVisible = !!p.imported || doneKind("screens") || (cur?.kind === "screens" && frac > 0.5);
   return { running, cur, frac, itemsVisible, buttonVisible };
 }
 
@@ -140,7 +140,7 @@ type Sel = { on: boolean; picked: number | null; pick: (i: number | null) => voi
 function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; now: number; page: number; device: "desktop" | "phone"; dark: boolean; sel: Sel; testUser: boolean }) {
   const c = paletteFor(p, dark);
   const { running, cur, itemsVisible, buttonVisible } = progress(p, now);
-  const building = running || p.build.status === "stopped";
+  const building = running || p.build.status === "stopped" || p.build.status === "waiting";
   const next = building ? p.plan.steps[p.build.step + 1] : undefined;
   const phone = device === "phone";
   const screen = p.plan.screens[page] ?? p.plan.screens[0];
@@ -336,7 +336,7 @@ export function AppView({ project: p, update, now }: { project: Project; update:
   const t = planTotals(p.plan);
   const dark = look === "dark" || (look === "auto" && resolvedTheme === "dark");
 
-  if (p.stage === "plan" && p.build.status === "idle") {
+  if (p.stage === "plan" && p.build.status === "idle" && !p.imported) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
         <span className="flex size-12 items-center justify-center rounded-2xl bg-sunken text-ink-2">
@@ -384,9 +384,13 @@ export function AppView({ project: p, update, now }: { project: Project; update:
           ) : (
             <>
               <strong className="font-semibold">
-                {p.build.status === "running"
+                {p.imported && p.build.status === "idle"
+                  ? "Your imported app, running in its own sandbox"
+                  : p.build.status === "running"
                   ? `Building step ${p.build.step + 1} of ${total}: ${lowerFirst(p.plan.steps[p.build.step].title)}`
-                  : p.build.status === "stopped"
+                  : p.build.status === "waiting"
+                    ? `Step ${p.stepsDone} of ${total} is ready for your review`
+                    : p.build.status === "stopped"
                     ? `Stopped at step ${p.build.step + 1} of ${total}`
                     : p.build.status === "checking"
                       ? "Checking the whole app"
@@ -398,7 +402,11 @@ export function AppView({ project: p, update, now }: { project: Project; update:
                 ))}
               </span>
               <span className="text-ink-2 max-sm:text-xs" title="Credits this build has used so far">
-                {p.build.status === "done" ? `Every check passed · used ${p.creditsUsed}% of this month’s credits` : `Used ${p.creditsUsed}% of this month’s credits so far`}
+                {p.imported && p.build.status === "idle"
+                  ? "6 of 8 things work today · see the plan"
+                  : p.build.status === "done"
+                    ? `Every check passed · used ${p.creditsUsed}% of this month’s credits`
+                    : `Used ${p.creditsUsed}% of this month’s credits so far`}
               </span>
             </>
           )}
@@ -407,6 +415,11 @@ export function AppView({ project: p, update, now }: { project: Project; update:
           <button type="button" onClick={() => setStopping(true)} className="flex h-8 shrink-0 items-center gap-1.5 rounded-[9px] border border-line-strong px-3 text-[13px] hover:bg-hover">
             <Icon name="stop" size={14} strokeWidth={2} />
             Stop
+          </button>
+        )}
+        {p.build.status === "waiting" && (
+          <button type="button" onClick={() => update((q) => continueBuild(q))} className="flex h-8 shrink-0 items-center rounded-[9px] bg-primary px-3 text-[13px] font-medium text-on-primary">
+            Continue
           </button>
         )}
         {p.build.status === "stopped" && (

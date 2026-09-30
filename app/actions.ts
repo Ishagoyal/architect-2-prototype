@@ -79,12 +79,13 @@ export async function continueWith(_: AuthState, form: FormData): Promise<AuthSt
   redirect(data.url);
 }
 
-export async function saveOnboarding(form: FormData) {
+export async function saveOnboarding(form: FormData): Promise<AuthState> {
   const supabase = await getSupabase();
   if (!supabase) redirect("/home");
   const name = String(form.get("name") ?? "").trim();
   const role = String(form.get("role") ?? "").trim() || null;
-  await supabase.auth.updateUser({ data: { ...(name ? { name } : {}), role, onboarded: true } });
+  const { error } = await supabase.auth.updateUser({ data: { ...(name ? { name } : {}), role, onboarded: true } });
+  if (error) return { error: "That didn’t save. Check your connection and press Continue again." };
   redirect("/home");
 }
 

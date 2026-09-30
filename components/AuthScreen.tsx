@@ -54,7 +54,7 @@ function Message({ state }: { state: AuthState }) {
   return null;
 }
 
-export function AuthScreen({ mode }: { mode: "sign-up" | "sign-in" }) {
+export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sign-in"; linkError?: boolean }) {
   const signUp = mode === "sign-up";
   const [emailState, emailAction, emailPending] = useActionState(signUp ? signUpWithEmail : signInWithEmail, undefined);
   const [oauthState, oauthAction, oauthPending] = useActionState(continueWith, undefined);
@@ -101,6 +101,8 @@ export function AuthScreen({ mode }: { mode: "sign-up" | "sign-in" }) {
             </h2>
             <p className="text-[15px] text-ink-2">Use Google, GitHub or your email.</p>
           </div>
+
+          {linkError && <Message state={{ error: "That sign-in link didn’t work. It may have expired or been used already. Try again below." }} />}
 
           <form action={oauthAction} className="flex flex-col gap-5">
             <button type="submit" name="provider" value="google" disabled={oauthPending} className={outlineButton}>

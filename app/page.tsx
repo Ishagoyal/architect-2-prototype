@@ -1,5 +1,6 @@
 import { AuthScreen } from "@/components/AuthScreen";
 
-export default function SignUp() {
-  return <AuthScreen mode="sign-up" />;
+export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
+  return <AuthScreen mode="sign-up" linkError={error === "link"} />;
 }

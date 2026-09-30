@@ -9,6 +9,7 @@ import { timeAgo, type Project } from "@/lib/model";
 export function HomeContent({ firstName, heading, ideas, initial }: { firstName: string; heading: string; ideas: string[]; initial: string }) {
   const { projects, loaded, now } = useProjects();
   const returning = loaded && projects.length > 0;
+  const setup = projects.filter((p) => p.imported && p.imported.setup !== "done");
   const recent = [...projects].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3);
 
   return (
@@ -19,6 +20,24 @@ export function HomeContent({ firstName, heading, ideas, initial }: { firstName:
       <p className="mt-3 text-center text-[15px] text-ink-2 md:mt-4 md:text-lg">
         {returning ? "Describe a new idea, or pick up a project below." : "Every step gets checked against what you asked for."}
       </p>
+      {setup.map((p) => (
+        <div key={p.id} className="mt-7 flex flex-col gap-3 rounded-2xl border border-accent-line bg-needs p-5">
+          <span className="text-[15px] font-semibold">
+            {p.name} is imported. {p.imported?.setup === "keys" ? "2 things" : "1 thing"} left before you can build
+          </span>
+          <ul className="flex flex-col gap-1.5 text-sm">
+            <li className="flex items-center gap-2">
+              <span className={p.imported?.setup === "keys" ? "text-ink-3" : "text-good"}>{p.imported?.setup === "keys" ? "○" : "✓"}</span> Add passwords and keys
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-ink-3">○</span> Check what we think your app does
+            </li>
+          </ul>
+          <Link href={`/p/${p.id}/${p.imported?.setup === "keys" ? "setup" : "plan"}`} className="flex h-10 items-center self-start rounded-[10px] bg-primary px-4 text-[13px] font-medium text-on-primary">
+            Continue setup
+          </Link>
+        </div>
+      ))}
       <PromptBox heading={heading} ideas={ideas} initial={initial} />
 
       {returning && (

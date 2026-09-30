@@ -37,6 +37,8 @@ export type Plan = {
   notIn: string[];
   question: { q: string; options: [string, string]; fallback: string };
   wholeApp: string[];
+  /** Only for imported projects: what was found in the code. */
+  found?: { stack: string[]; works: [string, boolean, string?][]; notes: string; paths: string[]; repo: string };
 };
 
 /** A change the AI suggests in chat. It isn't in the plan until accepted. */
@@ -60,6 +62,8 @@ export type Version = {
   files: string[];
   badge?: "live" | "stopped";
   pinned?: boolean;
+  /** What the project looked like at this version, so "Go back" can restore it. */
+  snap?: { plan: Plan; stepsDone: number };
 };
 
 export type ChatItem =
@@ -70,7 +74,8 @@ export type ChatItem =
   | { id: string; type: "fold"; text: string };
 
 export type Build = {
-  status: "idle" | "running" | "stopped" | "checking" | "done";
+  /** "waiting": Review is on, and a finished step waits for approval before the next one. */
+  status: "idle" | "running" | "waiting" | "stopped" | "checking" | "done";
   /** Index of the step being built. */
   step: number;
   since: number;
@@ -106,11 +111,36 @@ export type Project = {
   versions: Version[];
   chat: ChatItem[];
   template: Template;
+  deploy?: Deploy;
+  /** Set for projects brought in from GitHub (designs B3–B6). */
+  imported?: { repo: string; setup: "keys" | "plan" | "done"; keyReplaced: boolean };
+  /** The 9 PM automation's failing step was fixed (design C4). */
+  automationFixed?: boolean;
+  /** Review changes (design S6). */
+  reviewOn?: boolean;
+  /** Saved changes to an agent (design C1), by agent key. */
+  agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
+  /** GitHub (designs D1–D5). */
+  github?: { repo: string; own: boolean; behind: number; clash: boolean };
   createdAt: number;
   updatedAt: number;
 };
 
+/** Going live (designs E1–E4). */
+export type Deploy = {
+  status: "deploying" | "live" | "failed" | "offline";
+  since: number;
+  /** The version being deployed. */
+  target: number;
+  liveVersion: number | null;
+  history: { n: number; title: string; at: number }[];
+  liveKey: boolean;
+  failedVersion?: number;
+};
+
 export const STEP_MS = 5000;
+export const DEPLOY_STEP_MS = 1300;
+export const DEPLOY_STEPS = 6;
 export const CHECK_MS = 4000;
 
 /** "The app’s AI" → "the app’s AI" (lower-cases only the first letter). */
@@ -659,6 +689,7 @@ export function createProject(input: RefineInput, now = Date.now()): Project {
         checks: [],
         cost: "Less than 1% of this month’s credits",
         files: ["plan.md"],
+        snap: { plan: meal ? { ...plan, what: input.what || plan.what } : plan, stepsDone: 0 },
       },
     ],
     chat: [
@@ -705,19 +736,22 @@ function stepDone(p: Project, at: number): Project {
     checks: step.checks.map((c) => [c, "not run", "passed"]),
     cost: `${used}% of this month’s credits`,
     files: step.files,
+    snap: { plan: p.plan, stepsDone: i + 1 },
   };
+  const wait = !!next && !!p.reviewOn;
   const chat: ChatItem[] = [
     { id: uid(), type: "step", title: `Step ${i + 1} done: ${step.title}`, detail: `${step.checks.length} of ${step.checks.length} checks passed · used ${used}% of this month’s credits` },
     { id: uid(), type: "version", n, text: `saved · ${step.title} added` },
   ];
-  if (next) chat.push({ id: uid(), type: "ai", text: `Now building step ${i + 2}: ${lowerFirst(next.title)}.` });
+  if (next && wait) chat.push({ id: uid(), type: "ai", text: `Step ${i + 1} is ready. Review is on, so I’ll wait for you before step ${i + 2} (${lowerFirst(next.title)}).` });
+  else if (next) chat.push({ id: uid(), type: "ai", text: `Now building step ${i + 2}: ${lowerFirst(next.title)}.` });
   return {
     ...p,
     stepsDone: i + 1,
     creditsUsed: p.creditsUsed + used,
     versions: [version, ...p.versions],
     chat: [...p.chat, ...chat],
-    build: next ? { status: "running", step: i + 1, since: at } : { status: "checking", step: i, since: at },
+    build: next ? { status: wait ? "waiting" : "running", step: i + 1, since: at } : { status: "checking", step: i, since: at },
     stage: next ? "build" : "test",
     updatedAt: at,
   };
@@ -742,9 +776,94 @@ export function advance(p: Project, now = Date.now()): Project {
         ],
         updatedAt: q.build.since + CHECK_MS,
       };
+    } else if (q.deploy?.status === "deploying" && now - q.deploy.since >= DEPLOY_STEP_MS * (DEPLOY_STEPS - 1)) {
+      q = finishDeploy(q, q.deploy.since + DEPLOY_STEP_MS * (DEPLOY_STEPS - 1));
     } else break;
   }
   return q;
+}
+
+/** The meal app's AI needs its own Live key; the demo leaves it out so the failed-deploy screen can be seen. */
+export function needsLiveKey(p: Project) {
+  return p.kind === "meal" && !!p.plan.ai && !p.deploy?.liveKey;
+}
+
+export function startDeploy(p: Project, now = Date.now()): Project {
+  const target = p.versions[0].n;
+  const deploy: Deploy = {
+    status: "deploying",
+    since: now,
+    target,
+    liveVersion: p.deploy?.liveVersion ?? null,
+    history: p.deploy?.history ?? [],
+    liveKey: p.deploy?.liveKey ?? false,
+  };
+  return {
+    ...p,
+    deploy,
+    chat: [
+      ...p.chat,
+      { id: uid(), type: "user", text: p.deploy?.liveVersion ? "Deploy latest changes" : "Deploy it" },
+      { id: uid(), type: "ai", text: "Going live now. I’ll check the live link before calling it live." },
+    ],
+  };
+}
+
+function finishDeploy(p: Project, at: number): Project {
+  const d = p.deploy!;
+  if (needsLiveKey(p)) {
+    const kept = d.liveVersion;
+    return {
+      ...p,
+      deploy: { ...d, status: "failed", since: at, failedVersion: d.target },
+      chat: [
+        ...p.chat,
+        {
+          id: uid(),
+          type: "ai",
+          text: kept
+            ? `I published version ${d.target} and opened the live link, but the page showed an error. I kept version ${kept} live, so nothing changed for your users.`
+            : `I published version ${d.target} and opened the live link, but the page showed an error. Nothing went live, so nobody saw it.`,
+        },
+      ],
+      updatedAt: at,
+    };
+  }
+  const v = p.versions.find((x) => x.n === d.target);
+  const checks = planTotals(p.plan).checks;
+  return {
+    ...p,
+    stage: "live",
+    deploy: { ...d, status: "live", since: at, liveVersion: d.target, failedVersion: undefined, history: [{ n: d.target, title: v?.title ?? `Version ${d.target}`, at }, ...d.history.filter((h) => h.n !== d.target)] },
+    versions: p.versions.map((x) => ({ ...x, badge: x.n === d.target ? "live" : x.badge === "live" ? undefined : x.badge })),
+    chat: [
+      ...p.chat,
+      { id: uid(), type: "step", title: "Live ✓", detail: `All ${checks} checks passed · live link checked · used 1% of this month’s credits` },
+      { id: uid(), type: "ai", text: `${p.name} is live. I opened the live link and the ${p.plan.screens[0].title} screen loaded.` },
+    ],
+    creditsUsed: p.creditsUsed + 1,
+    updatedAt: at,
+  };
+}
+
+export function rollBackLive(p: Project, n: number, now = Date.now()): Project {
+  if (!p.deploy) return p;
+  return {
+    ...p,
+    deploy: { ...p.deploy, status: "live", liveVersion: n, since: now },
+    versions: p.versions.map((x) => ({ ...x, badge: x.n === n ? "live" : x.badge === "live" ? undefined : x.badge })),
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Version ${n} is live again. Nothing else changed.` }],
+    updatedAt: now,
+  };
+}
+
+/** What the top-bar button should say (design: Deploy → Deploying… → Live ✓ → Deploy latest changes). */
+export function deployLabel(p: Project) {
+  const d = p.deploy;
+  if (!d || d.status === "offline") return { label: "Deploy", strong: p.build.status === "done" };
+  if (d.status === "deploying") return { label: "Deploying…", strong: true };
+  if (d.status === "live" && d.liveVersion === p.versions[0].n) return { label: "Live ✓", strong: false };
+  return { label: d.liveVersion ? "Deploy latest changes" : "Deploy", strong: true };
 }
 
 export function stopBuild(p: Project, now = Date.now()): Project {
@@ -765,6 +884,7 @@ export function stopBuild(p: Project, now = Date.now()): Project {
         cost: "1% of this month’s credits",
         files: step.files.slice(0, 1),
         badge: "stopped",
+        snap: { plan: p.plan, stepsDone: p.stepsDone },
       },
       ...p.versions,
     ],
@@ -777,13 +897,48 @@ export function goBackTo(p: Project, n: number, now = Date.now()): Project {
   const to = p.versions.find((v) => v.n === n);
   if (!to) return p;
   const next = p.versions[0].n + 1;
+  // Older saved versions have no snapshot: work out the steps from the title ("Step 2: …").
+  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone) };
+  const done = Math.min(snap.stepsDone, snap.plan.steps.length);
+  const complete = done >= snap.plan.steps.length;
+  const build: Build = complete
+    ? { status: "done", step: done - 1, since: now }
+    : done === 0
+      ? { status: "idle", step: 0, since: now }
+      : { status: "stopped", step: done, since: now };
   return {
     ...p,
+    plan: snap.plan,
+    stepsDone: done,
+    build,
+    stage: complete ? "test" : done === 0 ? "plan" : "build",
+    suggestion: null,
     versions: [
-      { n: next, title: `Went back to v${n}`, at: now, summary: `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`, parts: ["Plan", "Code", "App’s AI"], checks: [], cost: "No credits", files: to.files },
+      {
+        n: next,
+        title: `Went back to v${n}`,
+        at: now,
+        summary: `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`,
+        parts: ["Plan", "Code", "App’s AI"],
+        checks: [],
+        cost: "No credits",
+        files: to.files,
+        snap: { plan: snap.plan, stepsDone: done },
+      },
       ...p.versions,
     ],
     chat: [...p.chat, { id: uid(), type: "version", n: next, text: `saved · went back to v${n}` }],
+    updatedAt: now,
+  };
+}
+
+/** Review is on and a finished step is waiting: carry on with the next one. */
+export function continueBuild(p: Project, now = Date.now()): Project {
+  if (p.build.status !== "waiting") return p;
+  return {
+    ...p,
+    build: { status: "running", step: p.build.step, since: now },
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Approved. Now building step ${p.build.step + 1}: ${lowerFirst(p.plan.steps[p.build.step].title)}.` }],
     updatedAt: now,
   };
 }
@@ -833,4 +988,88 @@ export function planMarkdown(p: Project) {
     `## 10. Open questions`,
     `- ${plan.question.q} (${p.answer ? `Answer: ${p.answer}` : `If you don’t answer, the plan uses “${plan.question.fallback}”`})`,
   ].join("\n\n");
+}
+
+/* ---------- Importing a project (designs B3–B6) ---------- */
+
+export function importedProject(repo: string, now = Date.now()): Project {
+  const base = createProject(
+    { idea: "meal assistant for a kitchen", name: "CookBridge", what: "", target: "", instructions: "", appType: "Website", theme: 0, withAI: true },
+    now,
+  );
+  const plan: Plan = {
+    ...mealPlan(),
+    tagline: "Here’s what we think your app does. Check it before building.",
+    what: "A meal assistant for Indian homes with a cook. The family tells it what’s in the kitchen by typing, speaking or sending a photo, and it suggests meals the cook can make today.",
+    why: "worked out from your code, your README and AGENTS.md.",
+    people: [
+      ["Owner", "Sets up the home and invites the family"],
+      ["Cook", "Sees today’s meals, marks what got used up"],
+      ["Family", "Adds what’s in the kitchen, picks meals"],
+    ],
+    can: ["Add kitchen items by typing, speaking or sending a photo", "Get meal ideas for today from what’s in the kitchen", "Confirm a meal for the cook", "Sign in and invite family members"],
+    screens: [
+      { label: "Aaj kya banega?", title: "Today", sub: "app/today" },
+      { label: "Kitchen", title: "Kitchen", sub: "app/kitchen" },
+      { label: "Welcome", title: "Onboarding", sub: "app/onboarding" },
+      { label: "Family", title: "Settings", sub: "app/settings" },
+    ],
+    ai: { name: "Meal suggester", does: "Suggests meals from the kitchen. Found in agents/graph.py (LangGraph).", reads: "Kitchen items, photos", cant: "Change the stock by itself", runs: "When someone asks", cost: "About 0.3% of this month’s credits per use" },
+    saves: [["Households", "The Sharma family"], ["Members", "Didi, cook"], ["Kitchen items", "Aloo, 2 kg"], ["Meals", "Rajma chawal, confirmed Tue"]],
+    keys: [["OpenAI", "Meal ideas and reading photos", "Preview ✓ · Live not added"], ["Google sign-in", "Family members sign in", "Preview ✓ · Live ✓"]],
+    steps: [
+      {
+        title: "Fix: confirming a meal lowers the stock",
+        sub: "The stock doesn’t change today",
+        kind: "feature",
+        checks: ["Confirming a meal lowers the stock", "Undo puts the stock back"],
+        cost: [0.5, 1.5],
+        builds: "Confirming a meal takes its ingredients off the kitchen stock, as the plan says.",
+        where: "Today screen",
+        files: ["db/schema.ts", "app/today/confirm.ts"],
+      },
+      {
+        title: "Voice updates in the live app",
+        sub: "Works in preview, needs the Live key",
+        kind: "feature",
+        checks: ["A voice note adds kitchen items"],
+        cost: [0.5, 1],
+        builds: "Voice notes add kitchen items in the live app too.",
+        where: "Kitchen screen",
+        files: ["lib/voice.ts"],
+      },
+    ],
+    notIn: ["Anything your code doesn’t do yet"],
+    question: { q: "Confirming a meal doesn’t lower the stock. Is that a mistake?", options: ["Yes, fix it", "No, it’s on purpose"], fallback: "Yes, fix it" },
+    wholeApp: ["Every screen from your code still opens", "Sign in still works"],
+    found: {
+      repo,
+      stack: ["Next.js", "Postgres", "LangGraph agent"],
+      works: [
+        ["Sign in", true],
+        ["Add kitchen items", true],
+        ["Suggest meals", true],
+        ["Photo upload", true],
+        ["Settings", true],
+        ["Onboarding", true],
+        ["Voice update", false, "the Live OpenAI key is missing"],
+        ["Confirming a meal lowers the stock", false, "the stock doesn’t change"],
+      ],
+      notes: "Found AGENTS.md. I’ll follow it when I build.",
+      paths: ["app/today", "app/kitchen", "app/onboarding", "app/settings"],
+    },
+  };
+  return {
+    ...base,
+    id: `cookbridge-${uid().slice(0, 4)}`,
+    name: "CookBridge",
+    idea: `Imported from ${repo}`,
+    plan,
+    template: { ...mealTemplate, heading: "Aaj kya banega?", eyebrow: "TODAY · FOR 5 PEOPLE" },
+    imported: { repo, setup: "keys", keyReplaced: false },
+    versions: [{ n: 1, title: `Imported from ${repo}`, at: now, summary: `Your code, copied from ${repo} (main). Your GitHub repo isn’t changed.`, parts: ["Code", "Plan"], checks: [], cost: "No credits", files: ["plan.md", "AGENTS.md"] }],
+    chat: [
+      { id: uid(), type: "ai", text: "CookBridge is running in its own sandbox. It needs 2 more keys to start. Please don’t paste keys here in the chat: use the form, so they stay out of the conversation." },
+    ],
+  };
 }

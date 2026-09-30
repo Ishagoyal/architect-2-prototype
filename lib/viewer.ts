@@ -8,6 +8,8 @@ export const DEMO_COOKIE = "architect_demo";
 
 export type Viewer = {
   kind: "demo" | "account";
+  /** Supabase user id, or "demo". Keeps each person's browser copy separate. */
+  id: string;
   name: string;
   firstName: string;
   initials: string;
@@ -27,6 +29,7 @@ export function makeViewer(kind: Viewer["kind"], name: string, extra: Partial<Vi
   const initials = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : clean.slice(0, 2)).toUpperCase();
   return {
     kind,
+    id: kind === "demo" ? "demo" : "",
     name: clean,
     firstName,
     initials,
@@ -57,6 +60,7 @@ export async function getViewer(): Promise<Viewer | null> {
   const given: string = meta.name || meta.full_name || meta.user_name || "";
   const name = given || (user.email ?? "").split("@")[0];
   return makeViewer("account", name, {
+    id: user.id,
     role: meta.role ?? null,
     onboarded: meta.onboarded === true,
     viaGithub: user.app_metadata?.provider === "github",

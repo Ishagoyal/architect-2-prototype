@@ -13,7 +13,7 @@ export default async function Layout({
   const [{ id }, viewer] = await Promise.all([params, requireViewer()]);
   return (
     <ViewerProvider viewer={viewer}>
-      <ProjectsProvider kind={viewer.kind}>
+      <ProjectsProvider kind={viewer.kind} owner={viewer.id}>
         <ProjectShell id={id}>{children}</ProjectShell>
       </ProjectsProvider>
     </ViewerProvider>

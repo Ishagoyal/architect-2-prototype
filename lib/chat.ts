@@ -28,10 +28,10 @@ export function send(p: Project, text: string, mode: Mode): Project {
   if (mode === "Ask") {
     if (changeWords.test(text))
       return { ...withUser, chat: [...withUser.chat, { id: uid(), type: "ai", text: "This would change your app. Plan it first, or build it now?", actions: ["plan-first", "build-now"] }] };
-    return {
-      ...withUser,
-      chat: [...withUser.chat, { id: uid(), type: "ai", text: "This is a demo, so I can only answer from the plan. Everything the app does is in the Plan tab." }],
-    };
+    const answer = p.imported
+      ? "In db/schema.ts, table meals. Confirming a meal writes there but never changes the stock, which is why that check fails."
+      : "This is a demo, so I can only answer from the plan. Everything the app does is in the Plan tab.";
+    return { ...withUser, chat: [...withUser.chat, { id: uid(), type: "ai", text: answer }] };
   }
   return { ...withUser, chat: [...withUser.chat, { id: uid(), type: "ai", text: "This is a bigger change. Want to see the plan first?", actions: ["see-plan", "build-now"] }] };
 }
@@ -48,8 +48,15 @@ export function accept(p: Project): Project {
     suggestion: null,
     chat: [...p.chat, { id: uid(), type: "ai", text: `Accepted. Step ${added} (${lowerFirst(p.suggestion.step.title)}) is in the plan now: ${t.steps} steps and ${t.checks} checks.` }],
   };
-  // Already built? Build just the new step.
-  if (q.build.status === "done" || q.build.status === "checking") q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  // A step that's already built changed: build again from that step.
+  const changed = p.suggestion.changeStep?.index;
+  if (changed !== undefined && changed < q.stepsDone) {
+    q = { ...q, stepsDone: changed, chat: [...q.chat, { id: uid(), type: "ai", text: `Step ${changed + 1} changed, so I’ll build it again, then the new step.` }] };
+    if (q.build.status !== "idle") q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  } else if (q.build.status === "done" || q.build.status === "checking") {
+    // Already built? Build just the new step.
+    q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  }
   return q;
 }
 
@@ -63,4 +70,15 @@ export function buildNow(p: Project): Project {
   const q = p.suggestion ? p : suggest(p);
   if (!q.suggestion) return q;
   return accept(q);
+}
+
+/** "Looks right" on an imported project's plan (design B5). */
+export function confirmImport(p: Project): Project {
+  if (!p.imported) return p;
+  return {
+    ...p,
+    imported: { ...p.imported, setup: "done" },
+    planVersion: p.planVersion + 1,
+    chat: [...p.chat, { id: uid(), type: "ai", text: "Thanks. That’s the plan now: every build and check uses it. Two things don’t work yet, so the plan has 2 steps to fix them. Confirm the plan and build when you’re ready." }],
+  };
 }

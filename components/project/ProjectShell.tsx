@@ -14,7 +14,7 @@ import { PanelBody, needsCount } from "./Panel";
 import { ProjectUIContext } from "./ProjectUI";
 import { useProject } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
-import { timeAgo, type Project } from "@/lib/model";
+import { deployLabel, timeAgo, type Project } from "@/lib/model";
 
 /* Inside a project:
    ≥1280px  top bar + full left rail + main + Needs you/chat panel (380px)
@@ -131,6 +131,12 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
   const [panelSheet, setPanelSheet] = useState(false);
   const [more, setMore] = useState(false);
   const [highlightNeeds, setHighlight] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const collapsePanel = useCallback((on: boolean) => {
+    setCollapsed(on);
+    if (on) setExpanded(false);
+  }, []);
   const closePanel = useCallback(() => setPanelSheet(false), []);
   const closeMore = useCallback(() => setMore(false), []);
   const openPanel = useCallback(() => setPanelSheet(true), []);
@@ -147,9 +153,10 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
   const isActive = (path: string) => pathname === `${base}/${path}` || pathname.startsWith(`${base}/${path}/`);
   const moreActive = ["database", "code", "settings"].some(isActive);
   const count = needsCount(project);
+  const deploy = deployLabel(project);
 
   return (
-    <ProjectUIContext.Provider value={{ openPanel, highlightNeeds, pointAtNeeds }}>
+    <ProjectUIContext.Provider value={{ openPanel, highlightNeeds, pointAtNeeds, collapsePanel }}>
       <div className="flex h-dvh flex-col">
         <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-line bg-panel px-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 md:gap-3.5">
@@ -166,7 +173,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
           </div>
 
           <div className="hidden md:block">
-            <JourneyBar projectId={project.id} current={project.stage} />
+            <JourneyBar projectId={project.id} current={project.stage} live={!!project.deploy?.liveVersion} />
           </div>
           <div className="md:hidden">
             <CurrentStage projectId={project.id} current={project.stage} />
@@ -174,11 +181,11 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
 
           <div className="flex items-center justify-end gap-2.5">
             <Link
-              href={`${base}/settings`}
-              title={reviewTip}
+              href={`${base}/settings?tab=team`}
+              title={project.reviewOn ? "Review on: each step waits for approval." : reviewTip}
               className="hidden h-9 items-center gap-1.5 rounded-[10px] border border-line-strong bg-panel px-3 text-[13px] whitespace-nowrap xl:flex"
             >
-              Review: <strong className="font-semibold">off</strong>
+              Review: <strong className="font-semibold">{project.reviewOn ? "on" : "off"}</strong>
             </Link>
             <button type="button" aria-label="Share" className="hidden size-9 items-center justify-center rounded-[10px] border border-line-strong bg-panel md:flex">
               <Icon name="share" size={16} />
@@ -186,9 +193,12 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
             <ChatButton count={count} onClick={openPanel} className="hidden md:flex lg:hidden" />
             <Link
               href={`${base}/deploy`}
-              className="flex h-9 shrink-0 items-center rounded-[10px] border border-line-strong bg-panel px-3.5 text-[13px] font-medium whitespace-nowrap"
+              className={`flex h-9 shrink-0 items-center rounded-[10px] border px-3.5 text-[13px] font-medium whitespace-nowrap ${
+                deploy.strong ? "border-primary bg-primary text-on-primary" : "border-line-strong bg-panel"
+              }`}
             >
-              Deploy
+              <span className="hidden sm:inline">{deploy.label}</span>
+              <span className="sm:hidden">{deploy.label === "Deploy latest changes" ? "Deploy" : deploy.label}</span>
             </Link>
           </div>
         </header>
@@ -236,9 +246,29 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
 
           <main className="flex min-w-0 flex-1 flex-col overflow-y-auto pb-[72px] md:pb-0">{children}</main>
 
-          <aside aria-label="Needs you and chat" className="hidden w-[340px] shrink-0 flex-col border-l border-line bg-panel lg:flex xl:w-[380px]">
-            <PanelBody project={project} update={update} now={now} />
-          </aside>
+          {collapsed && !expanded ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              aria-label="Open chat"
+              className="hidden w-11 shrink-0 flex-col items-center gap-3 border-l border-line bg-panel pt-4 text-ink-2 hover:text-ink lg:flex"
+            >
+              <span className="flex size-8 items-center justify-center rounded-lg border border-line-strong">
+                <Icon name="chat" size={15} />
+              </span>
+              {count > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white dark:text-on-primary">{count}</span>}
+              <span className="text-xs [writing-mode:vertical-rl]">Chat</span>
+            </button>
+          ) : (
+            <aside aria-label="Needs you and chat" className="relative hidden w-[340px] shrink-0 flex-col border-l border-line bg-panel lg:flex xl:w-[380px]">
+              {collapsed && (
+                <button type="button" onClick={() => setExpanded(false)} aria-label="Shrink chat" className="absolute top-2 right-2 z-10 flex size-7 items-center justify-center rounded-lg bg-panel text-ink-2 hover:bg-hover">
+                  <Icon name="close" size={13} />
+                </button>
+              )}
+              <PanelBody project={project} update={update} now={now} />
+            </aside>
+          )}
         </div>
 
         <DemoTourButton className="fixed bottom-[72px] left-4 z-30 md:hidden" />
@@ -274,7 +304,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
             <SheetRow href={`${base}/settings`} icon="settings" onClick={closeMore}>
               <span>
                 Project settings
-                <span className="block text-xs text-ink-2">Review: off</span>
+                <span className="block text-xs text-ink-2">Review: {project.reviewOn ? "on" : "off"}</span>
               </span>
             </SheetRow>
             <div onClick={closeMore}>
