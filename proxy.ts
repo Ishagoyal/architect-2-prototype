@@ -6,7 +6,7 @@ import { supabaseConfigured, supabaseKey, supabaseUrl } from "@/lib/supabase/con
    aren't signed in (and aren't trying the demo) to the sign-up screen, and
    sends people who are signed in past it. */
 
-const openPaths = ["/", "/sign-in", "/auth/callback"];
+const openPaths = ["/", "/sign-in", "/auth/callback", "/privacy"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
