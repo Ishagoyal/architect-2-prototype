@@ -59,6 +59,7 @@ Check your own work before showing it: run the build, take screenshots (Playwrig
 - **Short, simple language, one thing at a time.** She said "I don't understand anything" when given a long list of options. Give one clear recommendation, at most 2–3 plain choices, and ask one question.
 - Real examples. Back claims with sources, and say clearly when something is a guess.
 - Ask before big choices (new screens, new rules, deploying).
+- **Branches and pull requests:** name them after what they do (e.g. `step-2-sign-up-and-home`), never a random or "claude/" name.
 - Screen text in plain words. Screens say what the user can do or what happened, not the rules behind it.
 - Facts, not promises, in anything user-facing (legal risk).
 - **Never edit `docs/ARCHITECTURE.md` without her OK.** Show exact text before saving any doc change.
