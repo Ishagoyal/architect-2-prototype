@@ -2,16 +2,32 @@
 
 **Isha Goyal** · Technical PM assignment, Lyzr
 
-This file covers how architect.new works under the hood today, and how I'd build Architect 2.0 in the real world: sandboxes, the agent harness, switching models, how the screen talks to the backend and the preview, the proxy, GitHub, deploying (users' apps and Architect itself) and scaling.
+How I'd build Architect 2.0 in the real world (sandboxes, the agent harness, models, how the screen talks to the backend and the preview, the proxy, GitHub, deploying and scaling), and how architect.new works today.
 
-How I researched it: I built an app on architect.new (a meal planner for Indian homes, "Didi, abhi kya banega?") and followed its network calls in the browser. The screens and product decisions are in `PRODUCT.md`.
+**How I researched it:** I built an app on architect.new (a meal planner for Indian homes, "Didi, abhi kya banega?") and followed its network calls in the browser. The screens and product decisions are in [`PRODUCT.md`](PRODUCT.md).
 
-Diagrams (also as separate image files):
-- `architect-2.0-diagram.png`: every Architect 2.0 service and how they connect
-- `architect-2.0-flow.png`: from prompt to live app
-- `architect-today.png`: how architect.new works today
+## In one minute
+
+- **Reuse Lyzr's engine, show everything in Architect.** Lyzr Studio already has models, tools, a scheduler, workflows and traces. Architect 2.0 uses them behind the scenes, so nobody has to open a second product.
+- **Build in small, tested stages.** Tests are written in plain words with the plan, run after every stage, and each stage is saved as a version (plan + code + agent) that one click can undo.
+- **One AI gateway for every AI call**, from the builder and from live apps. It makes models switchable, keeps keys away from the AI and apps, and gives one cost unit (% of the month's credits) everywhere.
+- **Show every step live** over a live connection instead of polling.
+- **GitHub the way developers expect:** pick your repos, pull requests, outside changes only when you ask, import with a confirmed plan.
+- **Never say "Live ✓" until the live link works.** If the check fails, the previous version stays live.
+- **Stay on AWS, E2B and Netlify**, and put the limits where the cost grows: AI.
+
+## Contents
+
+- **Architect 2.0:** [At a glance](#architect-20-at-a-glance) · [Services](#services) · [1. Sandboxes](#1-sandboxes) · [2. The agent harness](#2-the-agent-harness) · [3. Models](#3-models) · [4. Screen ↔ sandbox ↔ backend](#4-frontend--sandbox--backend-and-the-live-preview) · [5. Proxy and keys](#5-where-the-proxy-sits) · [6. GitHub](#6-github) · [7. Deploy](#7-deploy) · [8. Scaling](#8-scaling-to-thousands-of-users)
+- [From prompt to live app: the walkthrough](#from-prompt-to-live-app-the-walkthrough) · [Key decisions](#my-key-decisions) · [Things I couldn't confirm](#things-i-couldnt-confirm)
+- **How architect.new works today:** [the research](#how-architectnew-works-today)
+- [Sources](#sources)
+
+Diagrams (also separate files): [`architect-2.0-diagram.png`](architect-2.0-diagram.png) (every 2.0 service) · [`architect-2.0-flow.png`](architect-2.0-flow.png) (prompt to live app) · [`architect-today.png`](architect-today.png) (architect.new today)
 
 ---
+
+# Architect 2.0
 
 ## Architect 2.0 at a glance
 
@@ -21,9 +37,7 @@ Diagrams (also as separate image files):
 - **Top:** the people. Non-technical users and developers use the Architect web app. People using a finished app go straight to it on Netlify.
 - **Middle:** Architect's backend on AWS.
 - **Bottom:** outside services we rent or reuse.
-- **Building:** a click goes to the Architect API → the build queue → the build workers (the agent harness).
-- The workers run the code in an E2B sandbox and call AI through the AI gateway.
-- Each finished version is saved to GitHub (as a pull request for developers).
+- **Building:** a click goes to the Architect API → the build queue → the build workers (the agent harness). The workers run the code in an E2B sandbox and call AI through the AI gateway. Each finished version is saved to GitHub (as a pull request for developers).
 - **Updates:** the workers post progress on a shared noticeboard (Redis) → the live connection service pushes it to the screen.
 - **Going live:** the deploy service publishes the app on Netlify. When people use the app, its AI calls go through the runtime gateway.
 
@@ -49,301 +63,15 @@ Diagrams (also as separate image files):
 | **GitHub** | Where the code lives | Where developers already work | GitHub |
 | **Netlify** | Live apps + TypeScript agents | Already used | Deploy |
 
-**Reuse Lyzr's engine, not its screens.** Lyzr Studio already has a lot that Architect doesn't show today:
-- **12 model providers** (OpenAI, Anthropic, Gemini, Bedrock, Vertex, Groq, xAI…, incl. 2 for voice) + **fallback** + **routing** (LiteLLM Complexity Router)
+**Reuse Lyzr's engine, not its screens.** Lyzr Studio already has a lot that Architect doesn't show today (checked 29 Sep):
+- **12 model providers** (OpenAI, Anthropic, Gemini, Bedrock, Vertex, Groq, xAI…, incl. 2 for voice: Deepgram, ElevenLabs) + **fallback** + **routing** (LiteLLM Complexity Router)
 - **62 tools** + MCP + custom tools (Architect's list showed 53)
 - **23 data connectors** (vector stores and databases)
 - A **scheduler** and a **workflow builder**, voice agents, telephony, memory, guardrails, traces, usage reports, simulation
 
 Architect 2.0 uses these behind the scenes and shows everything about the app (agent runs, automations, errors, cost) inside Architect. Lyzr Studio is an optional link, never a step anyone needs.
 
----
-
-# Part 1: How architect.new works today
-
-## Diagram (today)
-
-![How architect.new works today](architect-today.png)
-
----
-
-## 1. Frontend and backend
-
-- **Frontend (web app):** `www.architect.new`
-- **Backend:** `api.beta.architect.new`
-- The frontend is built with **Next.js** and hosted on **Vercel**.
-- It uses Next.js **App Router + server components**. Login also reaches the Next.js server through a **cookie**.
-- Next.js **prefetches pages** → when I open a project, the dashboard is already loaded in the background, so going back is instant.
-
-## 2. Tenants (brands)
-
-- There are different tenants. The backend decides **which tenant / brand you are on**.
-- By default, `architect.new` shows **Lyzr branding**.
-- Another domain, e.g. `agents.somebank.com`, could show **their own branding**.
-- The **first call** is the tenant config → it **doesn't need login** (no token is sent).
-- The **list of backend service URLs** is saved in a cookie (`tenant_urls`) → most likely it comes from the tenant config.
-- Services can be **switched on/off per tenant** → e.g. `maia` was `null` (off) for me.
-- The API is **versioned** → Architect uses `/api/v1`, Lyzr agents use `/v3`.
-
-## 3. Login
-
-- Login is **outsourced to Memberstack**. Architect does not own its own login system.
-- Lyzr **bought** auth instead of building it.
-- The browser calls `client.memberstack.com/member`, and the frontend uses Memberstack's JS SDK (`@memberstack/client@1.2.0`).
-- **Backend decides which tenant you are on; Memberstack decides who you are.**
-- Memberstack likely also handles **plans** → plan IDs start with `pln_`.
-
-## 4. Session
-
-- The session is a **JWT sent as a Bearer token**.
-- `iss`: issued by Memberstack
-- `aud: app_cm3k…`: the Architect app inside Memberstack
-- `id: mem_cmuf…`: me, the member
-
-**How the token is used:**
-
-Memberstack → gives a login token → the browser sends the token → Architect's API → (likely) verifies it with Memberstack's public key.
-
-- My **Memberstack ID = my Architect user ID**.
-- The login token lasts **14 days** → I stay logged in for 2 weeks.
-
-## 5. Architect sits on top of Lyzr Agent Studio
-
-- **Architect is the top layer.** Under it is **Lyzr Agent Studio**.
-- All the heavy lifting (agents, RAG, voice, billing) runs on **Lyzr Studio's production backend**.
-- **What Lyzr Studio has** (checked 29 Sep): **12 model providers** (incl. 2 for voice: Deepgram, ElevenLabs), LLM fallback, routing (LiteLLM Complexity Router), **62 tools** + MCP + custom tools, **23 data connectors**, voice agents, telephony, memory, guardrails, traces, usage reports, simulation.
-- Architect shows **very little of this** today.
-
-## 6–7. Microservices setup
-
-Next.js on Vercel → **Architect API (beta)** → gives the list of Lyzr service URLs (tenant config) + handles projects, plan, sandbox, deploy
-
-Browser → **Lyzr Studio microservices (prod)** directly → agent, RAG, crawler, voice, billing, metrics
-
-- Architect's backend is **beta** (`api.beta.architect.new`); Lyzr's services are **production** (`agent-prod`, `rag-prod`, `pagos-prod`, `crawler-prod`).
-
-Auth: Memberstack.
-
-## 8. Data model
-
-- `/apps/user/{me}/projects`
-- **apps** = what the user builds (AI apps)
-- **projects** = each thing you build is a "project"
-- **Projects are tied to a user. Billing is tied to an org.**
-
-## 9. Backend tech
-
-- Likely **Python** backend with **MongoDB** → from the ID format and date format in the responses.
-
-## 10. Code, sandbox and deploy
-
-- Each **project** gets a **GitHub repo** inside the **Lyzr-Apps organisation**.
-- The code runs in a **cloud sandbox**, a temporary cloud machine, for the live preview.
-- When apps are deployed, they go live on **Netlify** under **architect.space**.
-- If you connect GitHub, Architect stores the credentials **server-side**.
-
-## 11. The AI works in stages
-
-- `session_id`: my chat session with the builder
-- `plan_phase: handed_off`: the plan was handed over
-- **Planner → Coder**
-
-## 12. The planner (how Architect thinks)
-
-- The **whole planning chat is stored inside the project**: messages, plan, mockup and skill file all go into one `state` object.
-- The planner writes in a **custom markup**, and the frontend turns it into UI (options, buttons).
-- **Two ways to build:**
-  - **Default Lyzr agents**
-  - **GitAgent (beta)**: the agent lives in its own GitHub repo
-- First, it asks me **multiple-choice questions**.
-- Then it makes **3 things**:
-  - a **PRD** (the plan)
-  - an **HTML mockup** (how the app will look)
-  - a **skill file** (rules for the app's agent)
-- It changes the plan in **small edits**, not by rewriting all of it.
-- It has **theme presets**, and once chosen, the design is **locked**.
-- The PRD is saved in the app's repo → `plan-handoff/prd.md`. It can be downloaded from the project's **⋮ menu** ("Download PRD"), but **not as a PDF**.
-- **No plan versions** → when the plan changes, the old one is overwritten.
-- **The project's ⋮ menu** holds: Download Code, Environment variables (Beta), Duplicate App, Saved versions, View File Tree, Delete App, plus items that **change with the tab**: on Plan, Clear PRD and Download PRD; on Agents, "Feature testing: Off", Clear Chat and Clear Agents. I only found several of these late, because they're hidden there, and some delete things.
-- **Saved versions** are bookmarks saved as git tags, and they **only work with a linked GitHub repo**. Without it, the only way back is "Revert to this version" in the chat.
-- **Environment variables:** encrypted at rest, but Architect's own note says the **AI builder in the sandbox can read them**. There is **one set** of values: it applies to the preview right away and to the live app on the next deploy.
-- **Share:** only with members of the same org. It shares agents, knowledge bases and resources. GitHub access is given separately, on GitHub.
-
-## 13. Sandbox
-
-- The sandbox company is **E2B**. My app runs inside it on port **3333**.
-- The sandbox **times out ~10 minutes** after the last activity → every activity pushes the timer forward.
-- A paused sandbox shows a **"Resume Sandbox"** button. I have to click it myself.
-- Its status is kept in **Redis** (a fast cache), so the backend doesn't ask E2B every time.
-- The health check looks at 3 things: the sandbox is running, the app process is alive, and the page replies with **200 OK**.
-- The preview runs the app in **development mode** (hot reload), so code changes show up instantly.
-- Hot reload uses **Webpack** → only the changed code is sent to the preview.
-- The preview opens with its own **1-hour pass (token)** made by Architect.
-## 14. How the builder works
-
-**How a build flows:**
-
-1. I send a message → the **planner agent** asks questions and writes/updates the plan (PRD, mockup, skill file). The plan is saved **inside the project record**.
-2. When the plan is ready, it's **handed off** → the PRD is saved in the app's repo (`plan-handoff/prd.md`) and passed to the **coding agent**.
-3. The coding agent starts a **new session** and works **step by step inside the sandbox (E2B)**: editing files, running commands. It's likely **Claude** (its usage data looks like Claude's).
-4. It also creates the app's **Lyzr agent** and **Postgres database**.
-5. Every step is recorded in an **event log** (~6,500 events for my app). The chat is a filtered view of it. Stopping a build cancels this stream ("stream task cancelled").
-6. **Build checks** run: code complete → production build passed → preview healthy → ready.
-7. The work is saved as a **commit** + a **zip snapshot in S3**. The screen checks progress by **polling**.
-8. On **Deploy** → the code is pushed to **GitHub** → goes live on **Netlify**.
-
-**What I observed:**
-
-- Every message I send starts a **new session**.
-- One short reply took **16 steps** behind the scenes and read about **125,000 tokens** of context.
-- The screen shows only **"taking actions"** while it works.
-- Under each chat reply, the platform shows "**X steps · Y tokens**" (e.g. 18 steps · 92 tokens). Architect's AI says this is **not the full usage**. Nothing is shown **while building**.
-- The commit I saw was named **"Update generated app"**. I can **revert** to an older commit.
-- After a build, there is **one automatic test pass** ("single guaranteed pass"). When it got cancelled, it was marked **not retryable**.
-- A **"Test"** toggle is hidden in the 3-dots menu. It's **off** by default and says it adds **2–5 minutes**.
-- **Preview errors are detected.** A pop-up "Error Detected in Preview" covers the app, shows the raw error ("Error in child app · Type: network_error · Cannot connect to backend (/api/scheduler?action=list&agentId=…)") and offers "Yes, Help Me Fix It". In my app, the failing call was the **scheduler** endpoint, which may be linked to my 9 PM / 3 PM suggestions never arriving (not confirmed).
-- There are only **Plan** and **Build** modes. A simple question took **18 steps** and showed **"Build request failed"**.
-- The code **can be seen** through ⋮ → **View File Tree** (and a "Code" button on the mockup), but it's hidden in a menu: I built a whole app without finding it. Architect's own AI said there's **no code editor**. Changes happen through chat or by downloading.
-- When I stopped a build midway, the work done so far was **saved as a commit and marked ready**.
-- When I asked for changes after the build, the **plan (PRD) was edited first**, then the code was rebuilt.
-
-**My app's build timeline (UTC):**
-
-Project created (12:06) → **agent created first** (12:27) → **database created** (12:29) → code ready (14:19)
-
-- ~**2 hours 13 min** in total (including my planning time).
-- A rebuild took ~**53 seconds** from code done → ready.
-
-## 15. AI models
-
-- The AI inside my app is a **Lyzr Studio agent** using **OpenAI gpt-5.4**, paid through Lyzr's own OpenAI account.
-- The agent always replies in a **fixed JSON format** and remembers the last **10 messages**.
-- The AI that writes the code is **likely Claude** (its usage data looks like Claude's).
-- I **didn't see any option to choose a model**.
-- The agent's settings live in **Lyzr Studio**, not in the app's code. When I changed the plan, the **agent stayed the same** (last updated 24 Sep).
-
-**My app's agent ("Ghar Ka Meal Assistant"):**
-- Temperature **0.3**, **no tools**, no examples, tagged `architect`.
-- It is **set to always give 3 meals**, even when I only update inventory.
-- The **skill file is not attached** to the agent.
-- The app uses **Lyzr Scheduler** → meal suggestions at **9 PM** (next day's breakfast + lunch) and **3 PM** (dinner).
-- **The schedule ran, but I never knew.** Lyzr Studio's traces show the agent ran on time twice a day from 24 Sept, with a 0% error rate, but the suggestions never reached me. Nothing shows the steps after the agent (saving, notifying), and **I could only check any of this by opening a second product**, Lyzr Studio. There, two credit totals didn't match (5.97 consumed vs 3.2 / 20 used).
-- Architect's Agents tab shows a diagram (question → agent → answer) and an Edit Agent panel (name, description, role, goal, the raw instructions, model settings, MCP servers). The schedule isn't shown there.
-
-## 16. How the screen talks to the backend
-
-- The browser talks to **Architect's API** (projects, plan, sandbox, deploy) **and directly to Lyzr Studio** (billing, agents).
-- It uses **two keys**: the **Memberstack token** (who I am) and a **Lyzr API key** (for agents).
-- Build status is **checked again every few minutes** (polling). While deploying, the **whole project** is downloaded again each time.
-- Opening a project made **~7 calls**, and one huge project response repeated the mockup **~5 times** and the plan **~7 times**.
-- The builder chat loads **2 rounds of messages first**, then older ones as I scroll up.
-- Behind the chat is an **event log**. My app had about **6,500 events**.
-- Analytics tools track the app: Mixpanel, PostHog, Microsoft Clarity and Vercel Analytics.
-
-## 17. GitHub
-
-- Code is saved to **Lyzr's GitHub (Lyzr-Apps)** automatically.
-- Connecting **my own GitHub is optional**, and it asks for access to **all my repos**.
-- Code is **pushed to GitHub when I deploy**.
-
-## 18. Deploy
-
-- The **live link is reserved** when the project is created.
-- Clicking Deploy starts it **in the background** and the screen checks until it's done.
-- The deploy sends settings to the app, including **my Lyzr API key and my email** → so the live app's AI calls **likely run on my account** (not confirmed).
-- My live app's page title was **"Next.js App"**, the default name.
-- **Manage Deployment** screen: Edit URL, share buttons, custom domain, Redeploy, Undeploy, Edit App Info, and a form to **publish the app to a marketplace** (with an AI "Generate" button).
-- I didn't see any **check** before it showed live, and there's **no "go back to previous version"**.
-- The host (**Netlify**) is **chosen on each deploy** → I can deploy from the platform's repo or my own.
-- The settings are sent in **3 name styles** → plain, Vite, Next.js (e.g. `LYZR_API_KEY`, `VITE_LYZR_API_KEY`, `NEXT_LYZR_API_KEY`).
-- My app went live in **under ~20 minutes**.
-
-## 19. Credits and plans
-
-- **Billing is tied to an org.** An org was created for me automatically when I signed up.
-- Free (Community) plan: **2,000 credits a month**.
-- Paid plans have **top-up credits** and **seats** for teams.
-
-**What I observed about credits** (these are readings, not confirmed rules; I'm not sure what each charge was for):
-
-| When (IST) | Used credits (Lyzr) | What I had done before it |
-|---|---|---|
-| 27 Sep, ~21:00 | 1,248.67 | First build + first fixes |
-| 28 Sep, 14:13 | 1,447.64 (+199) | Reported bugs, asked for the cleanup, rebuild. This charge landed ~9 sec after a build finished |
-| 28 Sep, 15:00 | 1,481.16 (+33.5) | Deploy, a cancelled test pass, a revert, sandbox paused/resumed. **No build finished**, so I don't know what this was for |
-
-- By 28 Sep I had used **~74% of the month's 2,000 credits in 4 days**.
-
-**Three different cost numbers in three places:**
-
-| Where | Number | Label |
-|---|---|---|
-| Lyzr billing (network call) | 1,481.16 used of 2,000 | Lyzr credits |
-| Architect usage page (`/usage`) | 9.4613 | "one credit per billed USD" |
-| Builder top bar | $5.19 | no label |
-
-- I couldn't work out how these three relate.
-
-**The usage page (`architect.new/usage`):**
-- Total credits, a chart of usage over time (7 / 30 / 90 days, 12 months), and a breakdown **by app**.
-- Tabs: **My Usage** and **All Users**.
-- It says credits are "**dated by sandbox session rather than by individual call**" → all my usage showed on 28 Sep, even though I worked from 24–28 Sep.
-- There's **no cost per action** and nothing shown **while building**.
-- Projects also carry an **org ID**, so they belong to the org too.
-- **Orgs can have sub-orgs** → e.g. a company → its departments.
-- Colleagues could **join by company domain** (e.g. `@company.com`).
-- **Roles** → I'm the **owner** of my org. Permissions are set **per API route**.
-- **Onboarding check** → `/preferences/exists` decides whether to show onboarding or go straight to the dashboard.
-
-## 20. The app it built for me
-
-- A full **Next.js app**: screens + its own backend routes (`/api/...`).
-- Its **own Postgres database**, with one table per feature (households, inventory, meals).
-- Its **own login** (email + password), separate from my Architect login.
-- The app's login lasts **7 days**.
-- **One household per user** → household ID = my user ID.
-- It has a **`/api/seed`** route (for sample data) → it was called right after I logged in.
-- **Selecting** a meal → saves only the selection.
-- **Confirming** a meal → **one call** (`/api/confirmed-meals`) → per the PRD it should save to history + reduce inventory. I couldn't check the result because the app broke.
-
-## 21. Tools for agents
-
-- Agents can use **53 ready-made tools** (Gmail, Slack, Notion, Salesforce…) from **Composio** and **ACI**.
-- You can also add your own tools with **MCP servers**.
-- There is **no WhatsApp** tool.
-
-## 22. Where it runs
-
-| Part | Where |
-|---|---|
-| Frontend | Vercel |
-| Architect API | AWS, behind a load balancer |
-| Sandbox status | Redis |
-| Code snapshots | AWS S3 |
-| Preview | E2B |
-| Live apps | Netlify (architect.space) |
-| Logos | CloudFront (AWS) |
-
----
-
-## Full flow
-
-1. I describe an app
-2. A session starts
-3. The planner agent writes a plan
-4. The plan is handed off to a coding agent
-5. The code goes into a GitHub repo (Lyzr-Apps)
-6. It runs in a sandbox for live preview
-7. Deploy
-8. Netlify on architect.space
-9. The generated app calls Lyzr Studio agents for its AI features
-
----
-
-
-# Part 2: How I'd build Architect 2.0
-
-Each topic compares today with 2.0 and gives the reason. The problems I hit and the screens are in `PRODUCT.md`; this part is only how the system works.
+Each section below compares **today** with **2.0** and says **why**. The problems I hit and the screens are in `PRODUCT.md`; this file is only how the system works.
 
 ## 1. Sandboxes
 
@@ -522,13 +250,12 @@ Each topic compares today with 2.0 and gives the reason. The problems I hit and 
 
 **In 2.0:**
 - **Preview:** keep E2B's gate. I'd build our own only if we change sandbox provider or want branded share links.
-- **The proxies I add are at the AI layer:**
+- **The proxies I add are at the AI layer** (same gateway, two callers):
   - **Model gateway:** between the build workers and the AI models.
   - **Runtime gateway:** between live apps and the AI.
     - The live app no longer holds the creator's key. It sends its app ID + the end user's ID.
     - The gateway adds the key on the server, counts usage per app and per end user, and applies a monthly budget per app and a limit per end user (e.g. 20 meal suggestions a day).
     - Later, creators can charge their own users.
-  - Same gateway, two callers.
 - **Outgoing proxy:** the sandbox can only connect to the sites the app needs (package sites, Lyzr AI, connected tools). Everything else is blocked and logged.
 
 **Keys and secrets (how the outgoing proxy keeps them from the AI):**
@@ -599,9 +326,7 @@ Each topic compares today with 2.0 and gives the reason. The problems I hit and 
 - **One click: "Go back to previous version".**
 - **Live keys are set on the host**, and the app's AI goes through the runtime gateway, not the creator's key.
 
-**Under the hood:**
-
-Tested version from GitHub → production build → tests → Live keys set on the host → database changes if needed → upload to Netlify → address + HTTPS → live check → **Live ✓** (or the previous version stays) → every deploy kept, so going back = pointing the address back. Each step is pushed to the screen through the live connection.
+**Under the hood:** tested version from GitHub → production build → tests → Live keys set on the host → database changes if needed → upload to Netlify → address + HTTPS → live check → **Live ✓** (or the previous version stays) → every deploy kept, so going back = pointing the address back. Each step is pushed to the screen through the live connection.
 
 - By default: one button, with progress.
 - Developers: also deploys on merge to main and sees each step.
@@ -716,15 +441,6 @@ Machines cost a fixed amount per minute. AI cost grows with every step, every re
 - With review on: the work is on a copy, so the main app stays as it was.
 - By default: the change is saved as a version marked "Stopped · not tested", and one click goes back.
 
----
-
-## Things I couldn't confirm
-
-- How much of the ~125,000 tokens was already reused from cache, and the real AI cost of a full build. I'd measure that before tuning anything.
-- Whether E2B charges for storing paused sandboxes. Cleaning up after 30 days keeps it small either way.
-- How many live connections one server really holds. I assumed 5,000 and would confirm with a load test.
-- The sandbox and worker costs come from public prices, not Architect's real bill.
-
 ## My key decisions
 
 | Area | Decision | Main reason |
@@ -743,6 +459,195 @@ Machines cost a fixed amount per minute. AI cost grows with every step, every re
 | Deploy | Netlify, Live ✓ after a check, previous version stays live if it fails, one-click back | Don't say live until it works |
 | Architect itself | Stay on AWS, dev → staging → production | Already there |
 | Scaling | Queue + workers, start in under 1 minute, limits per plan | AI cost grows with use, so limits go there |
+
+## Things I couldn't confirm
+
+- How much of the ~125,000 tokens was already reused from cache, and the real AI cost of a full build. I'd measure that before tuning anything.
+- Whether E2B charges for storing paused sandboxes. Cleaning up after 30 days keeps it small either way.
+- How many live connections one server really holds. I assumed 5,000 and would confirm with a load test.
+- The sandbox and worker costs come from public prices, not Architect's real bill.
+
+---
+
+# How architect.new works today
+
+What I found by building my app and reading its network calls. Each 2.0 section above starts from these findings.
+
+![How architect.new works today](architect-today.png)
+
+**The flow today:** I describe an app → a session starts → the planner agent writes a plan → it's handed off to a coding agent → the code goes into a GitHub repo (Lyzr-Apps) → it runs in a sandbox for the live preview → Deploy → Netlify on architect.space → the generated app calls Lyzr Studio agents for its AI features.
+
+## Where it runs
+
+| Part | Where |
+|---|---|
+| Frontend (`www.architect.new`) | Next.js on Vercel |
+| Architect API (`api.beta.architect.new`) | AWS, behind a load balancer. Likely Python + MongoDB (from the ID and date formats) |
+| Agents, RAG, crawler, voice, billing, metrics | Lyzr Studio's production microservices (`agent-prod`, `rag-prod`, `pagos-prod`, `crawler-prod`) |
+| Sandbox status | Redis |
+| Code snapshots | AWS S3 |
+| Preview | E2B |
+| Live apps | Netlify (architect.space) |
+| Logos | CloudFront (AWS) |
+
+- **Architect sits on top of Lyzr Agent Studio.** All the heavy lifting (agents, RAG, voice, billing) runs on Lyzr Studio. Architect shows very little of what Studio has (see [Services](#services)).
+- The frontend uses the Next.js **App Router + server components**. Login also reaches the Next.js server through a **cookie**. Next.js **prefetches pages**, so going back to the dashboard is instant.
+- Architect's API is **beta**; Lyzr's services are **production**. The Architect API gives the list of Lyzr service URLs (the tenant config) and handles projects, plan, sandbox and deploy. The browser also calls Lyzr Studio's services directly.
+- The API is **versioned**: Architect uses `/api/v1`, Lyzr agents use `/v3`.
+- Analytics: Mixpanel, PostHog, Microsoft Clarity and Vercel Analytics.
+
+## Tenants (brands)
+
+- The backend decides **which tenant (brand) you are on**. `architect.new` shows Lyzr branding; another domain (e.g. `agents.somebank.com`) could show its own.
+- The **first call** is the tenant config, and it **doesn't need login**. The list of backend service URLs is saved in a cookie (`tenant_urls`), most likely from that config.
+- Services can be **switched on or off per tenant** (e.g. `maia` was `null`, off, for me).
+
+## Login and session
+
+- **Login is outsourced to Memberstack** (its JS SDK, `client.memberstack.com/member`). Lyzr bought auth instead of building it. **The backend decides which tenant you are on; Memberstack decides who you are.**
+- Memberstack likely also handles **plans** (plan IDs start with `pln_`).
+- The session is a **JWT sent as a Bearer token**: `iss` is Memberstack, `aud: app_cm3k…` is the Architect app inside Memberstack, `id: mem_cmuf…` is me. Architect's API likely verifies it with Memberstack's public key.
+- My **Memberstack ID = my Architect user ID**. The token lasts **14 days**.
+
+## Data model, orgs and roles
+
+- `/apps/user/{me}/projects`: **apps** are what the user builds (AI apps); each thing you build is a **project**.
+- **Projects are tied to a user and carry an org ID. Billing is tied to an org**, created automatically at sign-up.
+- **Orgs can have sub-orgs** (a company → its departments). Colleagues can **join by company domain** (`@company.com`).
+- **Roles:** I'm the **owner** of my org. Permissions are set **per API route**.
+- **Onboarding check:** `/preferences/exists` decides whether to show onboarding or go straight to the dashboard.
+
+## Code, sandbox and deploy
+
+- Each project gets a **GitHub repo** in the **Lyzr-Apps** organisation.
+- The code runs in a **cloud sandbox** (a temporary machine) for the live preview.
+- Deployed apps go live on **Netlify** under **architect.space**.
+- If you connect GitHub, Architect stores the credentials **server-side**.
+
+## The planner
+
+- The AI works in stages: **planner → coder** (`plan_phase: handed_off`, with a `session_id` for my chat with the builder).
+- The **whole planning chat is stored inside the project**: messages, plan, mockup and skill file all go into one `state` object.
+- The planner writes in a **custom markup** that the frontend turns into UI (options, buttons).
+- **Two ways to build:** default Lyzr agents, or **GitAgent (beta)**, where the agent lives in its own GitHub repo.
+- It first asks **multiple-choice questions**, then makes **3 things**: a **PRD** (the plan), an **HTML mockup** and a **skill file** (rules for the app's agent).
+- It changes the plan in **small edits**, not by rewriting it. It has **theme presets**, and once chosen, the design is **locked**.
+- The PRD is saved in the app's repo (`plan-handoff/prd.md`) and can be downloaded from the project's ⋮ menu ("Download PRD"), but **not as a PDF**.
+- **No plan versions:** when the plan changes, the old one is overwritten.
+
+## The project's ⋮ menu
+
+- It holds: Download Code, Environment variables (Beta), Duplicate App, Saved versions, View File Tree, Delete App, plus items that **change with the tab** (on Plan: Clear PRD, Download PRD; on Agents: "Feature testing: Off", Clear Chat, Clear Agents). I found several of these late, because they're hidden there, and some delete things.
+- **Saved versions** are bookmarks saved as git tags, and **only work with a linked GitHub repo**. Without it, the only way back is "Revert to this version" in the chat.
+- **Environment variables:** encrypted at rest, but Architect's own note says the **AI builder in the sandbox can read them**. There is **one set** of values: it applies to the preview right away and to the live app on the next deploy.
+- **Share:** only with members of the same org. It shares agents, knowledge bases and resources. GitHub access is given separately, on GitHub.
+
+## Sandbox
+
+- The sandbox company is **E2B**. My app runs inside it on port **3333**, in **development mode** (hot reload with **Webpack**, so only changed code is sent to the preview).
+- It **times out ~10 minutes** after the last activity; every activity pushes the timer forward. A paused sandbox shows a **"Resume Sandbox"** button that I have to click.
+- Its status is kept in **Redis**, so the backend doesn't ask E2B every time.
+- The health check looks at 3 things: the sandbox is running, the app process is alive, and the page replies with **200 OK**.
+- The preview opens with its own **1-hour pass (token)** made by Architect.
+
+## How the builder works
+
+1. I send a message → the **planner agent** asks questions and writes or updates the plan (PRD, mockup, skill file), saved **inside the project record**.
+2. When the plan is ready, it's **handed off**: the PRD is saved in the app's repo and passed to the **coding agent**.
+3. The coding agent starts a **new session** and works **step by step inside the E2B sandbox** (editing files, running commands). It's likely **Claude** (its usage data looks like Claude's).
+4. It also creates the app's **Lyzr agent** and **Postgres database**.
+5. Every step is recorded in an **event log** (~6,500 events for my app). The chat is a filtered view of it. Stopping a build cancels this stream ("stream task cancelled").
+6. **Build checks** run: code complete → production build passed → preview healthy → ready.
+7. The work is saved as a **commit** + a **zip snapshot in S3**. The screen checks progress by **polling**.
+8. On **Deploy**, the code is pushed to **GitHub** and goes live on **Netlify**.
+
+**What I observed:**
+- Every message I send starts a **new session**. One short reply took **16 steps** behind the scenes and read about **125,000 tokens** of context. The screen shows only **"taking actions"** while it works.
+- Under each chat reply: "**X steps · Y tokens**" (e.g. 18 steps · 92 tokens). Architect's AI says this is **not the full usage**. Nothing is shown **while building**.
+- The commit I saw was named **"Update generated app"**. I can **revert** to an older commit.
+- After a build, there is **one automatic test pass** ("single guaranteed pass"). When it got cancelled, it was marked **not retryable**.
+- A **"Test"** toggle is hidden in the ⋮ menu. It's **off** by default and says it adds **2–5 minutes**.
+- **Preview errors are detected.** A pop-up "Error Detected in Preview" covers the app, shows the raw error ("Error in child app · Type: network_error · Cannot connect to backend (/api/scheduler?action=list&agentId=…)") and offers "Yes, Help Me Fix It". In my app, the failing call was the **scheduler** endpoint, which may be linked to my 9 PM / 3 PM suggestions never arriving (not confirmed).
+- There are only **Plan** and **Build** modes. A simple question took **18 steps** and showed **"Build request failed"**.
+- The code **can be seen** through ⋮ → **View File Tree** (and a "Code" button on the mockup), but it's hidden: I built a whole app without finding it. Architect's own AI said there's **no code editor**. Changes happen through chat or by downloading.
+- When I stopped a build midway, the work done so far was **saved as a commit and marked ready**.
+- When I asked for changes after the build, the **plan (PRD) was edited first**, then the code was rebuilt.
+
+**My app's build timeline (UTC):** project created (12:06) → **agent created first** (12:27) → **database created** (12:29) → code ready (14:19). ~**2 hours 13 min** in total (including my planning time). A rebuild took ~**53 seconds** from code done → ready.
+
+## AI models and my app's agent
+
+- The AI inside my app is a **Lyzr Studio agent** using **OpenAI gpt-5.4**, paid through Lyzr's own OpenAI account. It always replies in a **fixed JSON format** and remembers the last **10 messages**.
+- The AI that writes the code is **likely Claude**. I **didn't see any option to choose a model**.
+- The agent's settings live in **Lyzr Studio**, not in the app's code. When I changed the plan, the **agent stayed the same** (last updated 24 Sep).
+
+**My app's agent ("Ghar Ka Meal Assistant"):**
+- Temperature **0.3**, **no tools**, no examples, tagged `architect`.
+- It is **set to always give 3 meals**, even when I only update inventory.
+- The **skill file is not attached** to the agent.
+- The app uses **Lyzr Scheduler**: meal suggestions at **9 PM** (next day's breakfast + lunch) and **3 PM** (dinner).
+- **The schedule ran, but I never knew.** Lyzr Studio's traces show the agent ran on time twice a day from 24 Sep, with a 0% error rate, but the suggestions never reached me. Nothing shows the steps after the agent (saving, notifying), and **I could only check any of this by opening a second product**, Lyzr Studio. There, two credit totals didn't match (5.97 consumed vs 3.2 / 20 used).
+- Architect's Agents tab shows a diagram (question → agent → answer) and an Edit Agent panel (name, description, role, goal, the raw instructions, model settings, MCP servers). The schedule isn't shown there.
+
+**Tools for agents:** **53 ready-made tools** (Gmail, Slack, Notion, Salesforce…) from **Composio** and **ACI**, plus your own through **MCP servers**. There is **no WhatsApp** tool.
+
+## How the screen talks to the backend
+
+- The browser talks to **Architect's API** (projects, plan, sandbox, deploy) **and directly to Lyzr Studio** (billing, agents), with **two keys**: the **Memberstack token** (who I am) and a **Lyzr API key** (for agents).
+- Build status is **checked again every few minutes** (polling). While deploying, the **whole project** is downloaded again each time.
+- Opening a project made **~7 calls**, and one huge project response repeated the mockup **~5 times** and the plan **~7 times**.
+- The builder chat loads **2 rounds of messages first**, then older ones as I scroll up.
+
+## GitHub
+
+- Code is saved to **Lyzr's GitHub (Lyzr-Apps)** automatically and **pushed when I deploy**.
+- Connecting **my own GitHub is optional**, and it asks for access to **all my repos**.
+
+## Deploy
+
+- The **live link is reserved** when the project is created. Clicking Deploy starts it **in the background**, and the screen checks until it's done.
+- The deploy sends settings to the app, including **my Lyzr API key and my email**, so the live app's AI calls **likely run on my account** (not confirmed). They're sent in **3 name styles**: plain, Vite, Next.js (e.g. `LYZR_API_KEY`, `VITE_LYZR_API_KEY`, `NEXT_LYZR_API_KEY`).
+- The host (**Netlify**) is **chosen on each deploy**, so I can deploy from the platform's repo or my own.
+- **Manage Deployment** screen: Edit URL, share buttons, custom domain, Redeploy, Undeploy, Edit App Info, and a form to **publish the app to a marketplace** (with an AI "Generate" button).
+- I didn't see any **check** before it showed live, and there's **no "go back to previous version"**.
+- My live app's page title was **"Next.js App"**, the default name. It went live in **under ~20 minutes**.
+
+## Credits and plans
+
+- Free (Community) plan: **2,000 credits a month**. Paid plans have **top-up credits** and **seats** for teams.
+
+**What I observed** (readings, not confirmed rules; I'm not sure what each charge was for):
+
+| When (IST) | Used credits (Lyzr) | What I had done before it |
+|---|---|---|
+| 27 Sep, ~21:00 | 1,248.67 | First build + first fixes |
+| 28 Sep, 14:13 | 1,447.64 (+199) | Reported bugs, asked for the cleanup, rebuild. This charge landed ~9 sec after a build finished |
+| 28 Sep, 15:00 | 1,481.16 (+33.5) | Deploy, a cancelled test pass, a revert, sandbox paused/resumed. **No build finished**, so I don't know what this was for |
+
+- By 28 Sep I had used **~74% of the month's 2,000 credits in 4 days**.
+
+**Three different cost numbers in three places** (a fourth is in Lyzr Studio's monitoring, above):
+
+| Where | Number | Label |
+|---|---|---|
+| Lyzr billing (network call) | 1,481.16 used of 2,000 | Lyzr credits |
+| Architect usage page (`/usage`) | 9.4613 | "one credit per billed USD" |
+| Builder top bar | $5.19 | no label |
+
+I couldn't work out how these relate.
+
+**The usage page (`architect.new/usage`):** total credits, a chart over time (7 / 30 / 90 days, 12 months), a breakdown **by app**, and tabs **My Usage** and **All Users**. It says credits are "**dated by sandbox session rather than by individual call**", so all my usage showed on 28 Sep, even though I worked from 24–28 Sep. There's **no cost per action** and nothing shown **while building**.
+
+## The app it built for me
+
+- A full **Next.js app**: screens + its own backend routes (`/api/...`).
+- Its **own Postgres database**, with one table per feature (households, inventory, meals).
+- Its **own login** (email + password), separate from my Architect login, lasting **7 days**.
+- **One household per user** (household ID = my user ID).
+- A **`/api/seed`** route (sample data), called right after I logged in.
+- **Selecting** a meal saves only the selection. **Confirming** a meal is **one call** (`/api/confirmed-meals`); per the PRD it should save to history and reduce inventory. I couldn't check the result because the app broke.
+
+---
 
 ## Sources
 
