@@ -407,8 +407,8 @@ export function AppView({ project: p, update, now }: { project: Project; update:
                 {p.imported && p.build.status === "idle"
                   ? "6 of 8 things work today · see the plan"
                   : p.build.status === "done"
-                    ? `Every check passed · used ${p.creditsUsed}% of this month’s credits`
-                    : `Used ${p.creditsUsed}% of this month’s credits so far`}
+                    ? `Every check passed · this build used ${p.creditsUsed}% of the month’s credits`
+                    : `This build has used ${p.creditsUsed}% of the month’s credits so far`}
               </span>
             </>
           )}

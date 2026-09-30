@@ -84,8 +84,8 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
     const t = planTotals(project.plan);
     needs.push({
       id: "built",
-      title: "Your app is built",
-      lines: [`All ${t.checks} checks passed · used ${project.creditsUsed}% of this month’s credits`],
+      title: "Ready to go live",
+      lines: [`Nothing is live yet. All ${t.checks} checks passed.`],
       actions: [
         { label: "Go live", primary: true, href: `${base}/deploy` },
         { label: "See the checks", href: `${base}/tests` },

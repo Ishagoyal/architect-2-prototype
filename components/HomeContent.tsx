@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { PromptBox } from "./PromptBox";
 import { useProjects } from "@/lib/projects";
+import { useViewer } from "@/lib/viewer-context";
 import { timeAgo, type Project } from "@/lib/model";
 
 /* A3 for someone new, A25 once there are projects to continue. */
 export function HomeContent({ firstName, heading, ideas, initial }: { firstName: string; heading: string; ideas: string[]; initial: string }) {
   const { projects, loaded, now } = useProjects();
+  const demo = useViewer().kind === "demo";
   const returning = loaded && projects.length > 0;
   const setup = projects.filter((p) => p.imported && p.imported.setup !== "done");
   const recent = [...projects].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3);
@@ -15,7 +17,7 @@ export function HomeContent({ firstName, heading, ideas, initial }: { firstName:
   return (
     <div className={`mx-auto flex w-full max-w-[760px] flex-col px-4 pt-10 pb-24 md:px-6 md:pb-10 ${returning ? "md:pt-11" : "md:pt-[160px]"}`}>
       <h1 className={`text-center font-serif text-[40px] leading-[1.05] ${returning ? "md:text-[56px]" : "md:text-[64px]"}`}>
-        {returning ? `Welcome back, ${firstName}. What are we building next?` : "What should it do?"}
+        {returning ? (demo ? "What are we building next?" : `Welcome back, ${firstName}. What are we building next?`) : "What should it do?"}
       </h1>
       <p className="mt-3 text-center text-[15px] text-ink-2 md:mt-4 md:text-lg">
         {returning ? "Describe a new idea, or pick up a project below." : "Every step gets checked against what you asked for."}
