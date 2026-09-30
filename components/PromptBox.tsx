@@ -8,6 +8,7 @@ import { ImportModal } from "./import/ImportModal";
 import { useDismiss } from "./useDismiss";
 import { useCallback, useEffect } from "react";
 import { useDictation } from "@/lib/useDictation";
+import { ConnectAppsList } from "./ConnectApps";
 
 /* The big "Describe your app" box on Home. Sending it opens Refine (step 3 of the build plan). */
 export function PromptBox({ heading, ideas, initial = "" }: { heading: string; ideas: string[]; initial?: string }) {
@@ -16,7 +17,12 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
   const [plus, setPlus] = useState(false);
   const [importing, setImporting] = useState(false);
   const [chips, setChips] = useState<string[]>([]);
-  const closePlus = useCallback(() => setPlus(false), []);
+  const [plusView, setPlusView] = useState<"main" | "apps">("main");
+  const closePlus = useCallback(() => {
+    setPlus(false);
+    setPlusView("main");
+  }, []);
+  const toggleChip = (c: string) => setChips((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
   const mic = useDictation(text, setText);
   const plusRef = useDismiss<HTMLDivElement>(plus, closePlus);
   // "New project" (/home?new=1): put the cursor in the box and show where to start.
@@ -97,14 +103,19 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
               </button>
               {plus && (
                 <div role="menu" className="absolute top-full left-0 z-40 mt-2 w-[min(380px,calc(100vw-48px))] rounded-2xl border border-line bg-panel p-2 shadow-pop">
+                  {plusView === "apps" ? (
+                    <ConnectAppsList selected={chips} onToggle={toggleChip} onBack={() => setPlusView("main")} onDone={closePlus} />
+                  ) : (
+                  <>
                   {[
                     { icon: "folder" as const, t: "Add files", s: "Docs, spreadsheets or images your app should use", chip: "brief.pdf" },
                     { icon: "share" as const, t: "Connect apps", s: "Gmail, Slack, Google Sheets and more", chip: "Google Sheets" },
                     { icon: "app" as const, t: "Add a design reference", s: "A screenshot, website link or Figma file", chip: "reference.png" },
                   ].map((it) => (
-                    <button key={it.t} type="button" role="menuitem" onClick={() => { setChips((c) => (c.includes(it.chip) ? c : [...c, it.chip])); closePlus(); }} className="flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-hover">
+                    <button key={it.t} type="button" role="menuitem" onClick={() => { if (it.t === "Connect apps") return setPlusView("apps"); setChips((c) => (c.includes(it.chip) ? c : [...c, it.chip])); closePlus(); }} className="flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-hover">
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sunken"><Icon name={it.icon} size={15} /></span>
-                      <span className="flex flex-col"><span className="text-sm">{it.t}</span><span className="text-xs text-ink-2">{it.s}</span></span>
+                      <span className="flex flex-1 flex-col"><span className="text-sm">{it.t}</span><span className="text-xs text-ink-2">{it.s}</span></span>
+                      {it.t === "Connect apps" && <span className="self-center text-ink-3"><Icon name="chevronRight" size={14} strokeWidth={2} /></span>}
                     </button>
                   ))}
                   <div className="my-1 h-px bg-line" />
@@ -116,6 +127,8 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sunken"><Icon name="plan" size={15} /></span>
                     <span className="flex flex-col"><span className="text-sm">Add context file</span><span className="text-xs text-ink-2">AGENTS.md or notes on how it should be built</span></span>
                   </button>
+                  </>
+                  )}
                 </div>
               )}
             </div>

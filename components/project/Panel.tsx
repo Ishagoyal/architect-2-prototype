@@ -10,6 +10,7 @@ import { acceptCheckChange, continueBuild, lowerFirst, planTotals, rejectCheckCh
 import { useProjectUI } from "./ProjectUI";
 import { AddOnTip, ExactModelPicker } from "../AddOnTip";
 import { useAddOn } from "@/lib/addon";
+import { ConnectAppsList } from "../ConnectApps";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
 
@@ -315,13 +316,17 @@ const plusItems: { icon: IconName; label: string; sub: string; chip: string }[] 
   { icon: "folder", label: "Add files", sub: "Docs, spreadsheets or PDFs the app should use", chip: "menu.pdf" },
   { icon: "app", label: "Add a photo", sub: "E.g. your fridge or a sketch", chip: "fridge.jpg" },
   { icon: "explore", label: "Design reference", sub: "A screenshot, website link or Figma file", chip: "reference.png" },
-  { icon: "share", label: "Connect an app", sub: "Gmail, Slack, Google Sheets and more", chip: "Google Sheets" },
+  { icon: "share", label: "Connect an app", sub: "Gmail, Slack, Google Sheets and more", chip: "" },
   { icon: "plan", label: "Notes for the AI", sub: "How it should build, e.g. AGENTS.md", chip: "AGENTS.md" },
 ];
 
-function PlusMenu({ onPick }: { onPick: (chip: string) => void }) {
+function PlusMenu({ onPick, chips }: { onPick: (chip: string) => void; chips: string[] }) {
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const [view, setView] = useState<"main" | "apps">("main");
+  const close = useCallback(() => {
+    setOpen(false);
+    setView("main");
+  }, []);
   const ref = useDismiss<HTMLDivElement>(open, close);
   return (
     <div ref={ref} className="relative">
@@ -336,12 +341,15 @@ function PlusMenu({ onPick }: { onPick: (chip: string) => void }) {
       </button>
       {open && (
         <div role="menu" className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-pop">
-          {plusItems.map((it) => (
+          {view === "apps" ? (
+            <ConnectAppsList selected={chips} onToggle={onPick} onBack={() => setView("main")} onDone={close} />
+          ) : plusItems.map((it) => (
             <button
               key={it.label}
               type="button"
               role="menuitem"
               onClick={() => {
+                if (it.label === "Connect an app") return setView("apps");
                 onPick(it.chip);
                 close();
               }}
@@ -485,7 +493,7 @@ export function Composer({ project, update }: { project: Project; update: (fn: (
         />
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            <PlusMenu onPick={(c) => setChips((x) => (x.includes(c) ? x : [...x, c]))} />
+            <PlusMenu chips={chips} onPick={(c) => setChips((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]))} />
             <div role="group" aria-label="Mode" className="flex gap-0.5 rounded-[10px] bg-sunken p-[3px]">
               {modes.map((m) => (
                 <button
