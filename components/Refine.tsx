@@ -225,6 +225,9 @@ export function Refine({ idea }: { idea: string }) {
                     <label htmlFor="r-fw">Framework</label>
                     {addOn ? <AddOnTag /> : <DevTag />}
                   </div>
+                  {!addOn ? (
+                    <AddOnTip label="Pick a framework (now Lyzr)" className="text-[13px] text-ink-2" />
+                  ) : (
                   <select id="r-fw" value={framework} onChange={(e) => setFramework(e.target.value)} className={`${input} py-2.5`}>
                     <option value="Lyzr">Lyzr (recommended)</option>
                     <option>LangGraph</option>
@@ -232,6 +235,7 @@ export function Refine({ idea }: { idea: string }) {
                     <option>OpenAI Agents SDK</option>
                     <option>Vercel AI SDK</option>
                   </select>
+                  )}
                   <span className="text-xs text-ink-2">The agent is saved as files in your code, in the framework you pick.</span>
                 </div>
                 <div className="flex flex-col gap-2 border-t border-accent-line pt-3">
