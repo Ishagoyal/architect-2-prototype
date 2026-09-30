@@ -30,7 +30,7 @@ function stepFor(key: JourneyKey, since: number, path: string, projects: Project
           return { n: 3, of: 6, text: "Architect read the idea and filled in the details: the name, what it does, who it’s for and the app’s AI. Nothing is built yet. Next, Show me confirms these.", acts: [{ click: '[data-tour="refine-confirm"]' }] };
         if (path === "/home")
           return { n: 2, of: 6, text: "This is Home, where you describe an app in your own words. Next, Show me picks one of the ideas and sends it.", acts: [{ click: '[data-tour="idea"]' }, { click: '[data-tour="send"]' }] };
-        return { n: 1, of: 6, text: "This is a finished demo app. Let’s build a new one from a single sentence. Show me opens Home.", acts: [{ go: "/home" }] };
+        return { n: 1, of: 6, text: "This is Abhi Kya Banega, a sample app that’s already built, so you have something to look at. Let’s build a new app from one sentence. Show me opens Home.", acts: [{ go: "/home" }] };
       }
       const base = `/p/${np.id}`;
       const onApp: Act[] = path === `${base}/app` ? [] : [{ go: `${base}/app` }];
