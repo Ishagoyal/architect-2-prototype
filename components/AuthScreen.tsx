@@ -184,6 +184,7 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
               // The demo always starts in the default view, whatever this browser used before.
               try {
                 localStorage.setItem("architect.devView", "off");
+                localStorage.removeItem("architect.github");
               } catch {
                 /* not remembered; fine */
               }

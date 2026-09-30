@@ -21,6 +21,7 @@ export function DemoStrip() {
             localStorage.removeItem("architect.tour");
             localStorage.removeItem("architect.tour.active");
                 localStorage.setItem("architect.devView", "off");
+                localStorage.removeItem("architect.github");
           } catch {
             /* nothing to clear */
           }
