@@ -8,7 +8,7 @@ import { DevOnly, DevTag } from "./DevTag";
 import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { useViewer } from "@/lib/viewer-context";
-import { createProject, detectAppType, instructionsFromIdea, isMealIdea, nameFromIdea, needsAI, suggestTarget, whatFromIdea } from "@/lib/model";
+import { aiTaskFromIdea, createProject, detectAppType, instructionsFromIdea, isMealIdea, nameFromIdea, needsAI, suggestTarget, whatFromIdea } from "@/lib/model";
 
 /* Design A5 (and A6 in Developer view). Shows what the planner understood; nothing is built yet. */
 
@@ -66,13 +66,13 @@ export function Refine({ idea }: { idea: string }) {
 
   const confirm = () => {
     setBusy(true);
-    const p = { ...createProject({ idea, name, what, target, instructions, appType, theme, withAI }), stepByStep: viewer.kind === "demo" };
+    const p = { ...createProject({ idea, name, what, target, instructions, appType, theme, withAI }), reviewOn: viewer.kind === "demo" };
     add(p);
     router.push(`/p/${p.id}/plan`);
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1080px] flex-col px-4 pt-6 pb-32 md:px-10 md:pt-10">
+    <div className={`mx-auto flex w-full max-w-[1080px] flex-col px-4 pt-6 ${viewer.kind === "demo" ? "pb-48" : "pb-32"} md:px-10 md:pt-10`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href={`/home`} className="flex items-center gap-2 text-sm hover:text-ink-2">
           <Icon name="back" size={16} strokeWidth={2} />
@@ -94,7 +94,7 @@ export function Refine({ idea }: { idea: string }) {
         </ol>
       </div>
 
-      <h1 className="mt-6 font-serif text-[40px] leading-[1.05] md:mt-8 md:text-[48px]">Here&apos;s what we understood</h1>
+      <h1 className="mt-6 font-serif text-[40px] leading-[1.05] md:mt-8 md:text-[48px]">Here’s what we understood</h1>
       <p className="mt-2 text-[15px] text-ink-2 md:text-[17px]">Check the details and change anything. Every field is optional.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-7">
@@ -186,7 +186,7 @@ export function Refine({ idea }: { idea: string }) {
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-semibold">Your app uses an AI model</span>
-                  <span className="text-[13px] text-ink-2">{meal ? "For suggesting three meals from what’s in the kitchen" : `For the main task: ${what.replace(/\.$/, "").toLowerCase()}`}</span>
+                  <span className="text-[13px] text-ink-2">{meal ? "For suggesting three meals from what’s in the kitchen" : aiTaskFromIdea(idea)}</span>
                 </span>
               </div>
               <div className="flex flex-col gap-1 border-t border-accent-line pt-3">

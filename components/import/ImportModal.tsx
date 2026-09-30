@@ -50,7 +50,7 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
     if (!picked.includes(repo)) setRepo(picked[0] ?? repos[0]);
   };
   const doImport = () => {
-    const p = { ...importedProject(`${handle}/${repo}`), stepByStep: viewer.kind === "demo" };
+    const p = { ...importedProject(`${handle}/${repo}`), reviewOn: viewer.kind === "demo" };
     add(p);
     // Developer view turns on after an import (PRODUCT.md), but not in the watch-only demo.
     if (viewer.kind !== "demo") setDevView(true);
