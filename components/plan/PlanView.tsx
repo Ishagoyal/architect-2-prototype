@@ -649,7 +649,7 @@ function useConfirm(project: Project, update: Update) {
       title="A suggested change is waiting"
       actions={
         <>
-          <button type="button" onClick={build} className={btnOutline}>
+          <button type="button" data-tour="build-without" onClick={build} className={btnOutline}>
             Build without it
           </button>
           <button
@@ -795,7 +795,7 @@ export function PlanView({ project, update }: { project: Project; update: Update
               <button type="button" onClick={() => { fixByChat(update); openPanel(); }} className={btnOutline}>
                 Fix it by chat
               </button>
-              <button type="button" onClick={() => update(confirmImport)} className={btnPrimary}>
+              <button type="button" data-tour="looks-right" onClick={() => update(confirmImport)} className={btnPrimary}>
                 Looks right
               </button>
             </span>
@@ -850,7 +850,7 @@ export function PlanView({ project, update }: { project: Project; update: Update
                   Add keys first
                 </Link>
               ) : project.stage === "plan" ? (
-                <button type="button" onClick={confirm} className={btnPrimary}>
+                <button type="button" data-tour="plan-confirm" onClick={confirm} className={btnPrimary}>
                   <span className="sm:hidden">Build</span>
                   <span className="hidden sm:inline">Confirm plan and build</span>
                 </button>

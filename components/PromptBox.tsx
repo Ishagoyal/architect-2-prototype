@@ -71,6 +71,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
               <button
                 type="button"
                 aria-label="Add files, import a project or connect apps"
+                data-tour="plus"
                 aria-expanded={plus}
                 onClick={() => setPlus((x) => !x)}
                 className={`flex size-10 items-center justify-center rounded-[10px] border ${plus ? "border-primary bg-primary text-on-primary" : "border-line-strong bg-panel"}`}
@@ -90,7 +91,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
                     </button>
                   ))}
                   <div className="my-1 h-px bg-line" />
-                  <button type="button" role="menuitem" onClick={() => { closePlus(); setImporting(true); }} className="flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-hover">
+                  <button type="button" role="menuitem" data-tour="import-open" onClick={() => { closePlus(); setImporting(true); }} className="flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-hover">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sunken"><Icon name="share" size={15} /></span>
                     <span className="flex flex-col"><span className="text-sm">Import project</span><span className="text-xs text-ink-2">From GitHub, a ZIP file, or Lovable, Bolt and v0</span></span>
                   </button>
@@ -114,6 +115,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
             <button
               type="submit"
               aria-label="Send"
+              data-tour="send"
               disabled={empty}
               className="flex size-10 items-center justify-center rounded-[10px] bg-primary text-on-primary disabled:cursor-default disabled:bg-line-strong disabled:text-panel"
             >
@@ -134,6 +136,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
           <button
             key={idea}
             type="button"
+            data-tour="idea"
             onClick={() => setText(idea)}
             className="rounded-full border border-line-strong bg-panel px-4 py-[11px] text-left text-sm hover:border-ink-3"
           >

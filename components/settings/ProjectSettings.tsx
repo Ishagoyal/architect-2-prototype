@@ -88,7 +88,7 @@ function Clash({ update }: { update: Update }) {
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => resolve("GitHub’s version was kept")} className={btnOutline}>Keep GitHub’s</button>
         <button type="button" onClick={() => resolve("Architect’s version was kept")} className={btnOutline}>Keep Architect’s</button>
-        <button type="button" onClick={() => setAi(true)} className={btnPrimary}>Let AI suggest a combined version</button>
+        <button type="button" data-tour="gh-ai" onClick={() => setAi(true)} className={btnPrimary}>Let AI suggest a combined version</button>
       </div>
       {ai && (
         <div className="overflow-hidden rounded-xl border border-line border-t-2 border-t-good bg-panel">
@@ -99,7 +99,7 @@ function Clash({ update }: { update: Update }) {
             </span>
             <span className="flex gap-2">
               <button type="button" className={`${btnOutline} h-9`}>Edit</button>
-              <button type="button" onClick={() => resolve("both changes were combined (approved by you)")} className={`${btnPrimary} h-9`}>Approve</button>
+              <button type="button" data-tour="gh-approve" onClick={() => resolve("both changes were combined (approved by you)")} className={`${btnPrimary} h-9`}>Approve</button>
             </span>
           </div>
           <Code tone="good" lines={[[12, "if (/khatam|khatm|finish/.test(text)) {", true], [13, '  return { item, amount: 0, status: "out" }', true], [14, "}"]]} />
@@ -139,7 +139,7 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
             <p className="rounded-xl bg-sunken px-3 py-2.5 text-sm">
               In Architect’s GitHub, private. <span className="text-ink-2">You can move it to your own GitHub any time, free on every plan. Nothing changes in how you build.</span>
             </p>
-            <button type="button" onClick={() => setMoving(true)} className={`${btnPrimary} self-start`}>
+            <button type="button" data-tour="gh-move" onClick={() => setMoving(true)} className={`${btnPrimary} self-start`}>
               Move to my GitHub
             </button>
           </>
@@ -164,6 +164,7 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
               </span>
               <button
                 type="button"
+                data-tour="gh-latest"
                 onClick={() =>
                   update((q) => ({
                     ...q,
@@ -221,6 +222,7 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
             <button type="button" onClick={() => setMoving(false)} className={btnOutline}>Cancel</button>
             <button
               type="button"
+              data-tour="gh-move-confirm"
               onClick={() => {
                 update((q) => ({
                   ...q,

@@ -6,42 +6,14 @@ import { Icon } from "./Icon";
 import { Sheet } from "./Sheet";
 import { useDismiss } from "./useDismiss";
 import { useViewer } from "@/lib/viewer-context";
-import { DEMO_PROJECT_ID } from "@/lib/demo";
+import { journeys, useTour, type JourneyKey } from "@/lib/tour";
 
 /* The reviewer checklist: the five journeys, ticked once opened. Only shown in the demo. */
 
-const p = `/p/${DEMO_PROJECT_ID}`;
-const journeys = [
-  { key: "prompt", title: "Build from a prompt", detail: "Describe an app, refine it, read the plan, watch it build", href: "/home" },
-  { key: "import", title: "Import a project", detail: "Bring in a GitHub repo and see what Architect makes of it", href: "/home?import=1" },
-  { key: "agents", title: "Agents", detail: "The app’s AI in plain words, and a 9 PM automation that needs a fix", href: `${p}/agents` },
-  { key: "github", title: "GitHub", detail: "Connect, get the latest changes, sort out a clash", href: `${p}/settings?tab=github` },
-  { key: "deploy", title: "Deploy", detail: "Go live, and see what happens when a check fails", href: `${p}/deploy` },
-];
-
-const KEY = "architect.tour";
-
+/** The checklist, backed by the shared tour state (lib/tour). */
 function useTried() {
-  const [tried, setTried] = useState<string[]>([]);
-  useEffect(() => {
-    try {
-      setTried(JSON.parse(localStorage.getItem(KEY) ?? "[]"));
-    } catch {
-      /* nothing remembered yet */
-    }
-  }, []);
-  const mark = useCallback((k: string) => {
-    setTried((t) => {
-      const next = t.includes(k) ? t : [...t, k];
-      try {
-        localStorage.setItem(KEY, JSON.stringify(next));
-      } catch {
-        /* not remembered, still fine */
-      }
-      return next;
-    });
-  }, []);
-  return { tried, mark };
+  const { tried, start } = useTour();
+  return { tried: tried as string[], mark: (k: string) => start(k as JourneyKey) };
 }
 
 /** Opens by itself once, when someone arrives from "Try the demo" (?tour=1). */
@@ -61,7 +33,7 @@ function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => v
       <div className="flex flex-col gap-1">
         <span className="text-[15px] font-semibold">Five things to try</span>
         <span className="text-[13px] text-ink-2">
-          This demo has made-up data, so click anything. Each one opens where that journey starts.
+          This demo has made-up data, so click anything. Pick one and a guide tells you what to click, step by step.
         </span>
       </div>
       <ol className="flex flex-col gap-1">

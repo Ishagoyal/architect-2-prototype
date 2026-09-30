@@ -117,6 +117,7 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
               try {
                 localStorage.removeItem("architect.projects.demo");
                 localStorage.removeItem("architect.tour");
+                localStorage.removeItem("architect.tour.active");
               } catch {
                 /* nothing to clear */
               }
