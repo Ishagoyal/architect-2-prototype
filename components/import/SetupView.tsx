@@ -35,8 +35,8 @@ export function SetupView({ project: p, update }: { project: Project; update: Up
   const [keys, setKeys] = useState<Record<string, string>>({});
   const replaced = p.imported?.keyReplaced;
   const rows: { name: string; where: string; preview: boolean; live: boolean }[] = [
-    { name: "OPENAI_API_KEY", where: "lib/ai.ts · meal suggestions", preview: false, live: false },
-    { name: "DEEPGRAM_API_KEY", where: "lib/voice.ts · voice updates", preview: true, live: false },
+    { name: "OPENAI_API_KEY", where: "lib/ai.ts · reading orders", preview: false, live: false },
+    { name: "DEEPGRAM_API_KEY", where: "lib/voice.ts · voice-note orders", preview: true, live: false },
     { name: "DATABASE_URL", where: "db/index.ts · your app’s data", preview: true, live: true },
   ];
   const cell = (id: string, saved: boolean, label: string) =>

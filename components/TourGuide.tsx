@@ -68,7 +68,7 @@ function stepFor(key: JourneyKey, since: number, path: string, projects: Project
         return {
           n: 1,
           of: 4,
-          text: "Last one: bring in an app you already have, as a second project. Show me opens the import, connects GitHub with only the repos you pick, and imports CookBridge.",
+          text: "Last one: bring in an app you already have, as a second project. Show me opens the import, connects GitHub with only the repos you pick, and imports OrderBook, a home bakery’s order tracker.",
           acts: [...(path === "/home" ? [] : [{ go: "/home" } as Act]), { click: '[data-tour="plus"]' }, { click: '[data-tour="import-open"]' }, { click: '[data-tour="import-connect"]', optional: true }, { click: '[data-tour="import-go"]' }],
         };
       const base = `/p/${ip.id}`;
