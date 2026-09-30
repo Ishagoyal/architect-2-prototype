@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "../Icon";
-import { DevOnly, DevTag } from "../DevTag";
+import { AddOnTag, DevOnly, DevTag } from "../DevTag";
 import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useProjectUI } from "../project/ProjectUI";
 import { uid, type Project } from "@/lib/model";
+import { useAddOn } from "@/lib/addon";
+import { AddOnTip, agentModels } from "../AddOnTip";
 
 /* Designs C1–C8: the app's agents and automations. Click any box to change it. */
 
@@ -68,7 +70,7 @@ function baseAgents(p: Project): Agent[] {
     {
       key: "main",
       name: p.plan.ai.name,
-      framework: "Lyzr",
+      framework: p.framework ?? "Lyzr",
       where: `agents/${meal ? "meal-planner" : "assistant"}/`,
       does: meal ? "Suggests 3 Indian meals from what’s in the kitchen, for the time of day and the family size." : p.plan.ai.does.split(". ")[0] + ".",
       never: meal ? "Change the kitchen stock. Suggest a dish from the last 3 days." : "Change or delete anything by itself.",
@@ -119,6 +121,7 @@ function Box({ label, title, sub, on, onClick, status }: { label: string; title:
 const dotted = { backgroundImage: "radial-gradient(var(--line-strong) 1px, transparent 1px)", backgroundSize: "18px 18px" };
 
 function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project: Project; update: Update; onClose: () => void }) {
+  const { addOn } = useAddOn();
   const [does, setDoes] = useState(agent.does);
   const [never, setNever] = useState(agent.never);
   const [tools, setTools] = useState(agent.tools);
@@ -127,6 +130,9 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
   const [tests, setTests] = useState<"idle" | "running" | "done">("idle");
   const [tip, setTip] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [window_, setWindow] = useState<"traces" | "try" | null>(null);
+  // Save is only for real changes.
+  const changed = does !== agent.does || never !== agent.never || tools.some((t, i) => t.on !== agent.tools[i]?.on);
   useEffect(() => {
     if (tests !== "running") return;
     const t = setTimeout(() => setTests("done"), 2200);
@@ -156,9 +162,9 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
       onClose={onClose}
       footer={
         <>
-          <span className="text-xs text-ink-2">{saved ? "Saved ✓" : "Saved as a new version"}</span>
+          <span className="text-xs text-ink-2">{saved ? `Saved as version ${project.versions[0].n}` : changed ? "Not saved yet" : "Change anything, then save it as a new version"}</span>
           <span className="flex gap-2">
-            <button type="button" className={btnOutline}>
+            <button type="button" onClick={() => setWindow(document.documentElement.dataset.dev === "on" ? "traces" : "try")} className={btnOutline}>
               <span className="dev:hidden">Try it</span>
               <span className="hidden dev:inline">Traces</span>
             </button>
@@ -171,19 +177,26 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
                     ...q,
                     agentEdits: { ...q.agentEdits, [agent.key]: { does, never, tools: tools.map((t) => t.on) } },
                     versions: [{ n, title: `${agent.name} changed`, at: Date.now(), summary: `What ${agent.name.toLowerCase()} does, what it must never do and what it can use were changed.`, parts: ["App’s AI"], checks: [], cost: "No credits", files: [`${agent.where}SOUL.md`, `${agent.where}RULES.md`] }, ...q.versions],
-                    chat: [...q.chat, { id: uid(), type: "version", n, text: `saved · ${agent.name} changed` }],
+                    chat: [
+                      ...q.chat,
+                      { id: uid(), type: "version", n, text: `saved · ${agent.name} changed` },
+                      { id: uid(), type: "ai", text: `Saved ${agent.name} as version ${n}. I’m running its 5 agent tests to check it still answers well.` },
+                    ],
                   };
                 });
                 setSaved(true);
+                setTests("running");
               }}
-              className={btnPrimary}
+              disabled={!changed || saved}
+              className={`${btnPrimary} disabled:opacity-50`}
             >
-              Save
+              {saved && !changed ? "Saved ✓" : saved ? "Saved ✓" : "Save"}
             </button>
           </span>
         </>
       }
     >
+      <AgentRuns open={window_} onClose={() => setWindow(null)} agent={agent} project={project} />
       <DevOnly>
         <div className="flex items-center justify-between">
           <span role="tablist" className="flex gap-0.5 rounded-[10px] bg-sunken p-[3px]">
@@ -247,21 +260,35 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
             </div>
             <span className="text-xs text-ink-2">Best quality costs more each time someone uses your app.</span>
           </div>
-          <DevOnly>
+          <DevOnly alsoWhen={addOn}>
             <div className="flex flex-col gap-1.5">
               <span className="flex items-center justify-between text-sm font-semibold">
-                Model · backup if it fails <DevTag />
+                Model · backup if it fails {addOn ? <AddOnTag /> : <DevTag />}
               </span>
-              <span className="grid grid-cols-2 gap-2">
-                <select aria-label="Model" className={`${ta} py-2`}>
-                  <option>gpt-4.1-mini</option>
-                  <option>claude-haiku-4-5</option>
-                </select>
-                <select aria-label="Backup model" className={`${ta} py-2`}>
-                  <option>claude-haiku-4-5</option>
-                  <option>gpt-4.1-mini</option>
-                </select>
-              </span>
+              {addOn ? (
+                <span className="grid grid-cols-2 gap-2">
+                  <select
+                    aria-label="Model"
+                    value={project.agentModel ?? ""}
+                    onChange={(e) => update((q) => ({ ...q, agentModel: e.target.value || undefined }))}
+                    className={`${ta} py-2`}
+                  >
+                    <option value="">Auto</option>
+                    {agentModels.map((m) => (
+                      <option key={m} value={m}>{m.split(" · ")[0]}</option>
+                    ))}
+                  </select>
+                  <select aria-label="Backup model" className={`${ta} py-2`}>
+                    {agentModels
+                      .filter((m) => m !== project.agentModel)
+                      .map((m) => (
+                        <option key={m}>{m.split(" · ")[0]}</option>
+                      ))}
+                  </select>
+                </span>
+              ) : (
+                <AddOnTip label="Pick a model and backup" className="text-[13px] text-ink-2" />
+              )}
             </div>
           </DevOnly>
           <div className="relative flex flex-col gap-2 rounded-xl bg-sunken p-3">
@@ -556,5 +583,79 @@ export function AgentsView({ project, update }: { project: Project; update: Upda
       </div>
       <AddAgent open={adding} onClose={() => setAdding(false)} update={update} />
     </div>
+  );
+}
+
+/** Traces (Developer view): the agent's last runs, step by step. Try it: ask it something. Example data. */
+function AgentRuns({ open, onClose, agent, project }: { open: "traces" | "try" | null; onClose: () => void; agent: Agent; project: Project }) {
+  const [q, setQ] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const model = project.agentModel?.split(" · ")[0] ?? "Auto";
+  const meal = project.kind === "meal";
+  const example = meal ? "Dinner for 4, we have rice, dal and aloo" : project.template.aiTest;
+  const reply = meal
+    ? "1. Dal tadka with jeera rice (35 min) · 2. Aloo gobi with phulka (30 min) · 3. Rajma chawal (45 min). All use what’s in the kitchen."
+    : `Here’s what I found in ${project.template.entity.toLowerCase()}: a short answer with the source it came from.`;
+  const runs = [
+    { at: "2 min ago", q: example, ok: true, ms: 1840, tokens: 1260 },
+    { at: "1 hour ago", q: meal ? "Breakfast ideas for tomorrow" : "What changed this week?", ok: true, ms: 2110, tokens: 1480 },
+    { at: "Yesterday, 9:00 PM", q: meal ? "Scheduled: breakfast + lunch ideas" : "Scheduled: morning summary", ok: !meal || !!project.automationFixed, ms: 2390, tokens: 1610 },
+  ];
+  const close = () => {
+    setAnswer(null);
+    setQ("");
+    onClose();
+  };
+  return (
+    <Modal
+      open={open !== null}
+      onClose={close}
+      title={open === "traces" ? `${agent.name} · last runs` : `Try ${agent.name}`}
+      actions={<button type="button" onClick={close} className={btnOutline}>Close</button>}
+    >
+      {open === "traces" ? (
+        <>
+          <div className="flex flex-col gap-3">
+            {runs.map((r) => (
+              <div key={r.at} className="flex flex-col gap-1.5 rounded-xl border border-line p-3 text-sm text-ink">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate font-medium">“{r.q}”</span>
+                  <span className="shrink-0 text-xs text-ink-2">{r.at}</span>
+                </span>
+                <span className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-ink-2">
+                  <span>read data ✓</span>
+                  <span>{model} · {r.tokens.toLocaleString("en-US")} tokens ✓</span>
+                  <span>reply ✓</span>
+                  {r.at.startsWith("Yesterday") && <span className={r.ok ? "" : "text-bad"}>notify {r.ok ? "✓" : "✗ blocked"}</span>}
+                  <span>{(r.ms / 1000).toFixed(1)} s</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs">Example runs for the prototype. Each step of a run is recorded, not just the agent’s answer.</p>
+        </>
+      ) : (
+        <>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setAsking(true);
+              setAnswer(null);
+              setTimeout(() => {
+                setAnswer(reply);
+                setAsking(false);
+              }, 900);
+            }}
+          >
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={example} aria-label="Ask the agent" className="h-10 min-w-0 flex-1 rounded-[10px] border border-line-strong bg-raised px-3 text-sm text-ink placeholder:text-ink-3" />
+            <button type="submit" className={btnPrimary}>{asking ? "…" : "Ask"}</button>
+          </form>
+          {answer && <p className="rounded-xl bg-sunken p-3 text-sm text-ink">{answer}</p>}
+          <p className="text-xs">Uses the test data, not your live app. Example answers for the prototype.</p>
+        </>
+      )}
+    </Modal>
   );
 }

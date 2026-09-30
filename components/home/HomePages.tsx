@@ -15,6 +15,7 @@ import { AddOnTip, ProjectLimitInput } from "../AddOnTip";
 import { useAddOn } from "@/lib/addon";
 import { UnlockButton, addOnFeatures } from "../UpgradeModal";
 import { useWorkspaceList } from "../workspaces";
+import { lowerFirst, usedFor } from "@/lib/model";
 
 const page = "mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-4 pt-8 pb-24 md:px-8 md:pt-10 md:pb-10";
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
@@ -131,6 +132,18 @@ export function UsagePage() {
   const viewer = useViewer();
   const low = used >= 70;
   const total = Math.max(1, projects.reduce((s, p) => s + p.creditsUsed, 0));
+  // Where the credits went, from the steps actually built: the 3 biggest, with a tip for each kind of step.
+  const tips: Record<string, string> = {
+    ai: "Tip: AI steps cost the most. Describe the result you expect, so fewer fixes are needed",
+    screens: "Tip: ask for all screen changes in one message instead of one at a time",
+    data: "Tip: list what your app should save in the plan, so it's built once",
+    login: "Tip: sign-in is usually quick; changes to it later cost more than getting it right in the plan",
+    feature: "Tip: keep each change small, so its checks pass the first time",
+  };
+  const spent = projects
+    .flatMap((p) => p.plan.steps.slice(0, p.stepsDone).map((s, i) => ({ key: `${p.id}-${i}`, what: `Step ${i + 1} of ${p.name}: ${lowerFirst(s.title)}`, tip: tips[s.kind] ?? tips.feature, used: usedFor(s) })))
+    .sort((a, b) => b.used - a.used)
+    .slice(0, 3);
   return (
     <div className={page}>
       <div className="flex flex-col gap-2">
@@ -160,19 +173,36 @@ export function UsagePage() {
         </div>
         <div className={card}>
           <span className="text-lg font-semibold">Building vs your live apps</span>
-          {viewer.kind !== "demo" ? (
-            <p className="text-sm text-ink-2">Nothing to show yet. Once an app is live, this splits your credits between building and people using your apps.</p>
+          {viewer.kind !== "demo" && projects.every((p) => p.creditsUsed === 0) ? (
+            <p className="text-sm text-ink-2">Nothing to show yet. After your first build, this splits your credits between building and people using your apps.</p>
           ) : (
-            <div className="flex h-2 overflow-hidden rounded-full"><span className="bg-accent" style={{ width: "66%" }} /><span className="bg-info" style={{ width: "34%" }} /></div>
+            <>
+              {/* Demo: made-up split. Accounts: everything so far is building, until an app is live. */}
+              {(() => {
+                const live = viewer.kind === "demo" ? 34 : projects.some((p) => p.deploy?.liveVersion) ? 10 : 0;
+                return (
+                  <>
+                    <div className="flex h-2 overflow-hidden rounded-full bg-todo"><span className="bg-accent" style={{ width: `${100 - live}%` }} /><span className="bg-info" style={{ width: `${live}%` }} /></div>
+                    <div className="flex justify-between text-[13px]">
+                      <span><strong className="font-semibold">Building · {100 - live}%</strong><span className="block text-xs text-ink-2">you, making changes</span></span>
+                      <span className="text-right"><strong className="font-semibold">Live apps · {live}%</strong><span className="block text-xs text-ink-2">{live === 0 ? "nothing is live yet" : "people using them + scheduled runs"}</span></span>
+                    </div>
+                  </>
+                );
+              })()}
+            </>
           )}
-          <div className="flex justify-between text-[13px]">
-            <span><strong className="font-semibold">Building</strong><span className="block text-xs text-ink-2">you, making changes</span></span>
-            <span className="text-right"><strong className="font-semibold">Live apps</strong><span className="block text-xs text-ink-2">people using them + scheduled runs</span></span>
-          </div>
         </div>
         <div className={card}>
           <span className="flex justify-between text-lg font-semibold">Where your credits went {viewer.kind === "demo" && <span className="text-xs font-normal text-ink-2">example</span>}</span>
-          {viewer.kind !== "demo" && <p className="text-sm text-ink-2">Nothing to show yet. After a few builds, this shows what used the most credits, with a tip for each.</p>}
+          {viewer.kind !== "demo" && spent.length === 0 && <p className="text-sm text-ink-2">Nothing to show yet. After a few builds, this shows what used the most credits, with a tip for each.</p>}
+          {viewer.kind !== "demo" &&
+            spent.map((r) => (
+              <div key={r.key} className="flex justify-between gap-3 border-t border-line pt-3 text-sm">
+                <span className="flex flex-col">{r.what}<span className="text-xs text-ink-2">{r.tip}</span></span>
+                <strong className="font-semibold whitespace-nowrap">{r.used}%</strong>
+              </div>
+            ))}
           {viewer.kind === "demo" && [
             ["3 fix attempts in step 3 of Abhi Kya Banega", "Tip: describe the expected result more clearly", "12%"],
             ["Scheduled runs at 9 PM and 3 PM", "Tip: pause them when you’re not using the app", "15% a month"],

@@ -21,14 +21,44 @@ function filesFor(p: Project): Record<string, string> {
   };
   p.plan.steps.slice(0, Math.max(p.stepsDone, p.imported ? p.plan.steps.length : 0)).forEach((s) =>
     s.files.forEach((f) => {
-      if (!f.includes(".")) return;
-      files[f] =
-        s.kind === "ai" && p.kind === "meal"
-          ? `import { pantry } from "@/db/pantry"\nimport { runAgent } from "@/agents/run"\n\n// Asks the meal planner for 3 meals from what is in the kitchen.\n// Skips anything cooked in the last 3 days (step 3 of the plan).\nexport async function suggestMeals(householdId: string) {\n  const stock = await pantry.current(householdId)\n  const recent = await pantry.confirmedSince(householdId, 3)\n  return runAgent("meal-planner", { stock, recent, count: 3 })\n}\n`
-          : `// ${s.title}: ${s.builds}\n// Written in step ${p.plan.steps.indexOf(s) + 1} of the plan.\n\nexport {}\n`;
+      if (f.endsWith("/") && f.startsWith("agents/")) return; // the agent's own files are above
+      const name = f.includes(".") ? f : `${f}/page.tsx`;
+      files[name] = s.kind === "ai" && p.kind === "meal" && name.startsWith("lib/") ? mealAI : codeFor(p, s, name);
     }),
   );
   return { ...files, ...p.codeEdits };
+}
+
+const mealAI = `import { pantry } from "@/db/pantry"\nimport { runAgent } from "@/agents/run"\n\n// Asks the meal planner for 3 meals from what is in the kitchen.\n// Skips anything cooked in the last 3 days (step 3 of the plan).\nexport async function suggestMeals(householdId: string) {\n  const stock = await pantry.current(householdId)\n  const recent = await pantry.confirmedSince(householdId, 3)\n  return runAgent("meal-planner", { stock, recent, count: 3 })\n}\n`;
+
+const camel = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+(.)/g, (_, c: string) => c.toUpperCase()).replace(/[^a-zA-Z0-9]/g, "");
+const snake = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const pascal = (x: string) => camel(x).replace(/^./, (c) => c.toUpperCase());
+
+/** Believable code for a file a step wrote, from the plan (what the app saves, its screens, its AI). */
+function codeFor(p: Project, s: Project["plan"]["steps"][number], name: string): string {
+  const head = `// ${s.title}: written in step ${p.plan.steps.indexOf(s) + 1} of the plan.\n`;
+  const saves = p.plan.saves;
+  if (name.endsWith("schema.ts"))
+    return `${head}import { table, id, text, timestamp, references } from "@/db/lib"\n\n${saves
+      .map(([label], i) => `export const ${camel(label)} = table("${snake(label)}", {\n  id: id(),\n  name: text().notNull(),${i > 0 ? `\n  ${camel(saves[0][0])}Id: references(${camel(saves[0][0])}.id),` : ""}\n  createdAt: timestamp().defaultNow(),\n})`)
+      .join("\n\n")}\n`;
+  if (name.endsWith("seed.ts"))
+    return `${head}import { db } from "@/db"\nimport { ${saves.map(([l]) => camel(l)).join(", ")} } from "@/db/schema"\n\n// A few examples, so the preview isn't empty.\nexport async function seed() {\n${saves.map(([l, ex]) => `  await db.insert(${camel(l)}).values({ name: ${JSON.stringify(ex)} })`).join("\n")}\n}\n`;
+  if (name.includes("login"))
+    return `${head}"use client"\n\nimport { useState } from "react"\nimport { sendSignInLink } from "@/lib/auth"\n\nexport default function Login() {\n  const [email, setEmail] = useState("")\n  const [sent, setSent] = useState(false)\n  return sent ? (\n    <p>Check your email for a sign-in link.</p>\n  ) : (\n    <form onSubmit={async (e) => { e.preventDefault(); await sendSignInLink(email); setSent(true) }}>\n      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />\n      <button>Send me a link</button>\n    </form>\n  )\n}\n`;
+  if (name.endsWith("auth.ts"))
+    return `${head}import { auth } from "@/lib/server"\n\n// Sign-in by email: a one-time link, no password to remember.\nexport async function sendSignInLink(email: string) {\n  return auth.signInWithOtp({ email, options: { emailRedirectTo: "/" } })\n}\n\nexport async function currentUser() {\n  const { data } = await auth.getUser()\n  return data.user\n}\n`;
+  if (name.startsWith("lib/") && s.kind === "ai")
+    return `${head}import { runAgent } from "@/agents/run"\n\n// The app’s AI: ${p.plan.ai?.does ?? "answers questions"}\n// It can’t: ${p.plan.ai?.cant ?? "change anything by itself"}\nexport async function ask(question: string, userId: string) {\n  const reply = await runAgent("assistant", { question, userId })\n  return { answer: reply.text, sources: reply.sources ?? [] }\n}\n`;
+  if (name.startsWith("app/") && name.endsWith(".tsx")) {
+    const page = pascal(name.split("/")[1] || "Home") || "Page";
+    const t = p.template;
+    return `${head}import { db } from "@/db"\nimport { ${camel(saves[0]?.[0] ?? "items")} } from "@/db/schema"\n\nexport default async function ${page}Page() {\n  const rows = await db.select().from(${camel(saves[0]?.[0] ?? "items")}).limit(20)\n  return (\n    <main>\n      <p className="eyebrow">${t.eyebrow}</p>\n      <h1>${name.split("/")[1] === p.plan.screens[0]?.sub.split("/")[1] ? t.heading : pascal(name.split("/")[1] ?? "Page")}</h1>\n      <ul>\n        {rows.map((row) => <li key={row.id}>{row.name}</li>)}\n      </ul>\n      <button>${t.action}</button>\n    </main>\n  )\n}\n`;
+  }
+  if (name.startsWith("lib/"))
+    return `${head}import { db } from "@/db"\n\n// ${s.builds}\nexport async function run(userId: string) {\n  // Reads what the step needs, then saves the result.\n  const rows = await db.query.${camel(saves[0]?.[0] ?? "items")}.findMany({ where: { userId } })\n  return rows\n}\n`;
+  return `${head}// ${s.builds}\nexport {}\n`;
 }
 
 const system = (name: string) => name === "plan.md" || name === "package.json";
@@ -90,13 +120,13 @@ export function CodeView({ project: p, file, update }: { project: Project; file?
                   setOpen(n);
                   setDraft(null);
                 }} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left font-mono text-[12.5px] ${open === n ? "bg-sunken" : "hover:bg-hover"}`}>
-                <Icon name="plan" size={12} />
+                <Icon name={system(n) ? "lock" : "plan"} size={12} />
                 <span className="truncate">{n}</span>
               </button>
             ))}
           </div>
           <span className="mt-2 flex items-center gap-1.5 border-t border-line px-2 pt-2 text-xs text-ink-2">
-            <Icon name="lock" size={12} /> System files · read-only
+            <Icon name="lock" size={12} /> plan.md and package.json are kept by Architect, so they’re read-only
           </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col">

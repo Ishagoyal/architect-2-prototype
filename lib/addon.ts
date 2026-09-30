@@ -39,3 +39,39 @@ export function useAddOn() {
   }, []);
   return { addOn: on, setAddOn: set };
 }
+
+/* The exact builder model (with the add-on). Shared, so the Builder button shows it. */
+export const LET_AUTO_PICK = "Let Auto pick";
+const MODEL_KEY = "architect.model";
+const MODEL_EVENT = "architect-model";
+
+function readModel() {
+  try {
+    return localStorage.getItem(MODEL_KEY) ?? LET_AUTO_PICK;
+  } catch {
+    return LET_AUTO_PICK;
+  }
+}
+
+export function useExactModel() {
+  const [model, setModelState] = useState(LET_AUTO_PICK);
+  useEffect(() => {
+    const sync = () => setModelState(readModel());
+    sync();
+    window.addEventListener(MODEL_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(MODEL_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  const setModel = useCallback((m: string) => {
+    try {
+      localStorage.setItem(MODEL_KEY, m);
+    } catch {
+      /* not remembered; this page still works */
+    }
+    window.dispatchEvent(new Event(MODEL_EVENT));
+  }, []);
+  return [model, setModel] as const;
+}
