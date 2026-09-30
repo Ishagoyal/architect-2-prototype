@@ -6,22 +6,6 @@ export const DEMO_PROJECT_ID = "abhi-kya-banega";
 export const DEMO_IDEA =
   "An app for Indian homes with a cook. The family says what’s in the kitchen, in Hinglish or with a photo, and it suggests three meals we can make right now.";
 
-/** Workspaces in the demo (design A26). */
-export const demoWorkspaces = [
-  {
-    name: "Alex’s workspace",
-    initial: "A",
-    color: "bg-accent",
-    lines: ["Personal · Pro plan · just you", "3 projects · credits running low, 74% used"],
-  },
-  {
-    name: "Lyzr Product Team",
-    initial: "L",
-    color: "bg-[#2E4A3B]",
-    lines: ["Team plan · 6 people", "8 projects · credits on track, 31% used"],
-  },
-];
-
 /** Starter ideas, picked by what the person said they do at onboarding. */
 const ideasByRole: Record<string, { heading: string; ideas: string[] }> = {
   "Product Management": {

@@ -66,7 +66,9 @@ export function useTour() {
     and go back to the default view. The next visit starts from the beginning. */
 export function forgetDemo() {
   try {
-    for (const k of ["architect.projects.demo", "architect.projects.demo2", "architect.projects.demo3", KEY, ACTIVE, "architect.github", "architect.addon"]) localStorage.removeItem(k);
+    for (const k of [KEY, ACTIVE, "architect.github", "architect.addon"]) localStorage.removeItem(k);
+    // Every demo project list (each demo workspace has its own) and the demo's workspaces.
+    for (const k of Object.keys(localStorage)) if (k.startsWith("architect.projects.demo") || k === "architect.workspaces.demo") localStorage.removeItem(k);
     localStorage.setItem("architect.devView", "off");
   } catch {
     /* nothing remembered; nothing to clear */

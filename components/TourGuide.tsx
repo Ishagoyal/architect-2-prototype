@@ -7,6 +7,7 @@ import { useProjects } from "@/lib/projects";
 import { useViewer } from "@/lib/viewer-context";
 import { DEMO_IDEA, DEMO_PROJECT_ID } from "@/lib/demo";
 import { journeys, runActs, useTour, type Act, type JourneyKey } from "@/lib/tour";
+import { useWorkspaces } from "@/lib/workspaces";
 import { lowerFirst, type Project } from "@/lib/model";
 
 /* The guide bar: says what to click on this screen for the journey you picked,
@@ -130,6 +131,9 @@ export function TourGuide() {
   const { projects, loaded } = useProjects();
   const { active, tried, start, finish, stop } = useTour();
   const [busy, setBusy] = useState(false);
+  // The tour's apps live in the first workspace; go back to it before doing anything.
+  const workspaces = useWorkspaces(viewer.id);
+  const toMain = () => workspaces.current !== "main" && workspaces.switchTo("main");
 
   // Arriving from "Try the demo" (?tour=1): start the first journey straight away.
   useEffect(() => {
@@ -171,6 +175,7 @@ export function TourGuide() {
             <button
               type="button"
               onClick={() => {
+                toMain();
                 start("prompt");
                 router.push("/home");
               }}
@@ -183,6 +188,7 @@ export function TourGuide() {
               <button
                 type="button"
                 onClick={() => {
+                  toMain();
                   start(next.key);
                   router.push(next.href);
                 }}
@@ -198,6 +204,7 @@ export function TourGuide() {
                 disabled={busy}
                 onClick={async () => {
                   setBusy(true);
+                  toMain();
                   await runActs(step.acts!, (href) => router.push(href));
                   setBusy(false);
                 }}

@@ -7,6 +7,7 @@ import { Sheet } from "./Sheet";
 import { useDismiss } from "./useDismiss";
 import { useViewer } from "@/lib/viewer-context";
 import { journeys, useTour, type JourneyKey } from "@/lib/tour";
+import { useWorkspaces } from "@/lib/workspaces";
 import { useProjects } from "@/lib/projects";
 import { DEMO_PROJECT_ID } from "@/lib/demo";
 
@@ -15,7 +16,16 @@ import { DEMO_PROJECT_ID } from "@/lib/demo";
 /** The checklist, backed by the shared tour state (lib/tour). */
 function useTried() {
   const { tried, start } = useTour();
-  return { tried: tried as string[], mark: (k: string) => start(k as JourneyKey) };
+  const viewer = useViewer();
+  const ws = useWorkspaces(viewer.id);
+  // The tour's apps live in the first workspace, so picking a journey goes back there.
+  return {
+    tried: tried as string[],
+    mark: (k: string) => {
+      if (ws.current !== "main") ws.switchTo("main");
+      start(k as JourneyKey);
+    },
+  };
 }
 
 /** Opens by itself once, when someone arrives from "Try the demo" (?tour=1). */

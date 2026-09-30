@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { advance, type Project } from "./model";
 import { demoSeeds } from "./seeds";
 import { getBrowserSupabase } from "./supabase/client";
+import { projectsOwner, useCurrentWorkspace } from "./workspaces";
 
 /* Where projects live while you use the app.
    Demo: in this browser only (made-up data, reset by leaving the demo).
@@ -26,7 +27,8 @@ const ProjectsContext = createContext<Ctx | null>(null);
 /** One browser copy per person: "demo", or the signed-in account's id. */
 // "demo3": the demo now starts with nothing built (the tour builds the meal app), so older browser copies are left behind.
 export const DEMO_STORAGE_KEY = "architect.projects.demo3";
-const keyFor = (owner: string) => (owner === "demo" ? DEMO_STORAGE_KEY : `architect.projects.account.${owner}`);
+const keyFor = (owner: string) =>
+  owner === "demo" ? DEMO_STORAGE_KEY : owner.startsWith("demo.ws.") ? `${DEMO_STORAGE_KEY}.${owner.slice(5)}` : `architect.projects.account.${owner}`;
 
 function readLocal(owner: string): Project[] | null {
   if (owner === "scene") return null;
@@ -49,7 +51,7 @@ function writeLocal(owner: string, list: Project[]) {
 
 export function ProjectsProvider({
   kind,
-  owner,
+  owner: person,
   seed,
   children,
 }: {
@@ -59,20 +61,28 @@ export function ProjectsProvider({
   seed?: () => Project[];
   children: React.ReactNode;
 }) {
+  // Each workspace has its own projects. Only the first ("main") one is saved to Supabase.
+  const workspace = useCurrentWorkspace(person);
+  const owner = workspace ? projectsOwner(person, workspace) : "";
+  const main = workspace === "main";
   const [projects, setProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // Which workspace the projects in state belong to, so switching never saves one workspace's projects into another.
+  const [loadedFor, setLoadedFor] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const dirty = useRef(new Set<string>());
 
   // Load
   useEffect(() => {
+    if (!owner) return;
     let cancelled = false;
     const local = readLocal(owner);
-    const start = local ?? (kind === "scene" ? (seed?.() ?? []) : kind === "demo" ? demoSeeds() : []);
+    const start = local ?? (kind === "scene" ? (seed?.() ?? []) : kind === "demo" && main ? demoSeeds() : []);
     setProjects(start.map((p) => advance(p)));
+    setLoadedFor(owner);
     setLoaded(true);
 
-    const supabase = kind === "account" ? getBrowserSupabase() : null;
+    const supabase = kind === "account" && main ? getBrowserSupabase() : null;
     if (supabase) {
       supabase
         .from("projects")
@@ -98,13 +108,13 @@ export function ProjectsProvider({
       cancelled = true;
     };
     // `seed` only matters for the first load.
-  }, [kind, owner]);
+  }, [kind, owner, main]);
 
   // Save
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || !owner || loadedFor !== owner) return;
     writeLocal(owner, projects);
-    const supabase = kind === "account" ? getBrowserSupabase() : null;
+    const supabase = kind === "account" && main ? getBrowserSupabase() : null;
     if (!supabase || dirty.current.size === 0) return;
     const ids = [...dirty.current];
     const t = setTimeout(() => {
@@ -117,7 +127,7 @@ export function ProjectsProvider({
           .then(({ error }: { error: unknown }) => error && console.warn("Couldn't save to Supabase; kept in this browser.", error));
     }, 800);
     return () => clearTimeout(t);
-  }, [projects, loaded, kind, owner]);
+  }, [projects, loaded, loadedFor, kind, owner, main]);
 
   // Tick: keep time labels fresh and move running builds forward.
   useEffect(() => {
@@ -151,26 +161,27 @@ export function ProjectsProvider({
       setProjects((list) => [p, ...list.filter((x) => x.id !== p.id)]);
       // Save straight away: the next page has its own provider, so nothing may be left pending here.
       writeLocal(owner, [p, ...(readLocal(owner) ?? []).filter((x) => x.id !== p.id)]);
-      const supabase = kind === "account" ? getBrowserSupabase() : null;
+      const supabase = kind === "account" && main ? getBrowserSupabase() : null;
       supabase
         ?.from("projects")
         .upsert({ id: p.id, name: p.name, data: p, updated_at: new Date(p.updatedAt).toISOString() })
         .then(({ error }: { error: unknown }) => error && console.warn("Couldn't save to Supabase; kept in this browser.", error));
     },
-    [kind, owner],
+    [kind, owner, main],
   );
 
   const remove = useCallback(
     (id: string) => {
       setProjects((list) => list.filter((p) => p.id !== id));
       writeLocal(owner, (readLocal(owner) ?? []).filter((p) => p.id !== id));
-      const supabase = kind === "account" ? getBrowserSupabase() : null;
+      const supabase = kind === "account" && main ? getBrowserSupabase() : null;
       supabase?.from("projects").delete().eq("id", id).then(() => {});
     },
-    [kind, owner],
+    [kind, owner, main],
   );
 
-  const value = useMemo(() => ({ loaded, projects, now, update, add, remove }), [loaded, projects, now, update, add, remove]);
+  const ready = loaded && loadedFor === owner;
+  const value = useMemo(() => ({ loaded: ready, projects, now, update, add, remove }), [ready, projects, now, update, add, remove]);
   return <ProjectsContext.Provider value={value}>{children}</ProjectsContext.Provider>;
 }
 
