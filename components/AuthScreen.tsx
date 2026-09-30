@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { continueWith, signInWithEmail, signUpWithEmail, startDemo, type AuthState } from "@/app/actions";
 import { Icon } from "./Icon";
 import { ThemeButton } from "./YouCorner";
+import { forgetDemo } from "@/lib/tour";
 
 /* Design A1. Sign up and sign in share it; "Try the demo" is the reviewer path. */
 
@@ -181,20 +182,14 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
           <form
             action={startDemo}
             onSubmit={() => {
-              // The demo always starts in the default view, whatever this browser used before.
-              try {
-                localStorage.setItem("architect.devView", "off");
-                localStorage.removeItem("architect.github");
-              } catch {
-                /* not remembered; fine */
-              }
-              document.documentElement.dataset.dev = "off";
+              // Every visit starts from the beginning, in the default view.
+              forgetDemo();
             }}
             className="flex items-center justify-between gap-3 rounded-xl border border-accent-line bg-needs px-4 py-3"
           >
             <span className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">Just looking?</span>
-              <span className="text-xs text-ink-2">Open a ready project. No sign-up.</span>
+              <span className="text-xs text-ink-2">Watch an app get built. No sign-up.</span>
             </span>
             <button
               type="submit"

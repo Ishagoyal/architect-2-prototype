@@ -7,6 +7,7 @@ import { usePrefs } from "@/lib/prefs";
 import { useDismiss } from "./useDismiss";
 import { useViewer } from "@/lib/viewer-context";
 import { signOut } from "@/app/actions";
+import { forgetDemo } from "@/lib/tour";
 
 /* The same bottom-left corner on every screen, at home and inside a project:
    Credits, Settings, your name, the ☾ / ☀ button, and the Developer view chip when it's on. */
@@ -114,16 +115,7 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
             action={signOut}
             onSubmit={() => {
               if (viewer.kind !== "demo") return;
-              try {
-                localStorage.removeItem("architect.projects.demo");
-                localStorage.removeItem("architect.projects.demo2");
-                localStorage.removeItem("architect.tour");
-                localStorage.removeItem("architect.tour.active");
-                localStorage.setItem("architect.devView", "off");
-                localStorage.removeItem("architect.github");
-              } catch {
-                /* nothing to clear */
-              }
+              forgetDemo();
             }}
           >
             <button

@@ -9,11 +9,11 @@ import { DEMO_PROJECT_ID } from "./demo";
 const P = `/p/${DEMO_PROJECT_ID}`;
 
 export const journeys = [
-  { key: "prompt", title: "Build from a prompt", detail: "Describe an app, refine it, read the plan, watch it build", href: "/home" },
-  { key: "import", title: "Import a project", detail: "Bring in a GitHub repo and see what Architect makes of it", href: "/home" },
+  { key: "prompt", title: "Build from a prompt", detail: "Describe a meal planner in one sentence, read the plan, watch it build", href: "/home" },
   { key: "agents", title: "Agents", detail: "The app’s AI in plain words, and a 9 PM automation that needs a fix", href: `${P}/agents` },
-  { key: "github", title: "GitHub", detail: "Connect, get the latest changes, sort out a clash", href: `${P}/settings?tab=github` },
+  { key: "github", title: "GitHub", detail: "Move the code to your GitHub, get a teammate’s changes, sort out a clash", href: `${P}/settings?tab=github` },
   { key: "deploy", title: "Deploy", detail: "Go live, and see what happens when a check fails", href: `${P}/deploy` },
+  { key: "import", title: "Import a project", detail: "Bring in an app you already have, from GitHub", href: "/home" },
 ] as const;
 
 export type JourneyKey = (typeof journeys)[number]["key"];
@@ -62,6 +62,18 @@ export function useTour() {
   return { ...state, start, finish, stop };
 }
 
+/** Starting or leaving the demo: forget its projects, the tour, the pretend GitHub connection,
+    and go back to the default view. The next visit starts from the beginning. */
+export function forgetDemo() {
+  try {
+    for (const k of ["architect.projects.demo", "architect.projects.demo2", "architect.projects.demo3", KEY, ACTIVE, "architect.github"]) localStorage.removeItem(k);
+    localStorage.setItem("architect.devView", "off");
+  } catch {
+    /* nothing remembered; nothing to clear */
+  }
+  document.documentElement.dataset.dev = "off";
+}
+
 /* ---------- "Show me": does the clicks for one step ---------- */
 
 export type Act = { click: string; optional?: boolean } | { fill: string; value: string } | { go: string };
@@ -97,10 +109,11 @@ export async function runActs(acts: Act[], go: (href: string) => void) {
       continue;
     }
     if ("fill" in a) {
-      const el = (await find(a.fill)) as HTMLInputElement | null;
+      const el = (await find(a.fill)) as HTMLInputElement | HTMLTextAreaElement | null;
       if (!el) return;
       flash(el);
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
       setter?.call(el, a.value);
       el.dispatchEvent(new Event("input", { bubbles: true }));
       await wait(400);

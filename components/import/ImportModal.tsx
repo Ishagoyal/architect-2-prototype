@@ -11,7 +11,7 @@ import { importedProject } from "@/lib/model";
 
 /* Designs B2 (connect GitHub, only the repos you pick) and B3 (pick the repo). */
 
-const repos = ["CookBridge", "school-fees-tracker", "portfolio-site", "notes-api"];
+const repos = ["OrderBook", "school-fees-tracker", "portfolio-site", "notes-api"];
 const KEY = "architect.github";
 
 export function ImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -22,9 +22,9 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
   const handle = viewer.kind === "demo" ? "alexmorgan" : viewer.firstName.toLowerCase();
   const [connected, setConnected] = useState(false);
   const [scope, setScope] = useState<"only" | "all">("only");
-  const [picked, setPicked] = useState<string[]>(["CookBridge"]);
+  const [picked, setPicked] = useState<string[]>(["OrderBook"]);
   const [source, setSource] = useState<"GitHub" | "ZIP file" | "Lovable, Bolt, v0…">("GitHub");
-  const [repo, setRepo] = useState("CookBridge");
+  const [repo, setRepo] = useState("OrderBook");
 
   useEffect(() => {
     if (!open) return;
@@ -159,7 +159,7 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
                       <input placeholder="e.g. apps/web" className="h-12 rounded-xl border border-line-strong bg-raised px-3 text-[15px] placeholder:text-ink-3" />
                     </label>
                   </div>
-                  {repo === "CookBridge" && (
+                  {repo === "OrderBook" && (
                     <p className="flex items-center gap-2 rounded-xl bg-info-soft px-3 py-2.5 text-[13px] text-info">
                       <Icon name="plan" size={14} />
                       Found <span className="font-mono">AGENTS.md</span> in this repo. Architect will follow it as your project’s instructions.

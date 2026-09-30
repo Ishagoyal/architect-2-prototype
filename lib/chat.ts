@@ -29,7 +29,7 @@ export function send(p: Project, text: string, mode: Mode): Project {
     if (changeWords.test(text))
       return { ...withUser, chat: [...withUser.chat, { id: uid(), type: "ai", text: "This would change your app. Plan it first, or build it now?", actions: ["plan-first", "build-now"] }] };
     const answer = p.imported
-      ? "In db/schema.ts, table meals. Confirming a meal writes there but never changes the stock, which is why that check fails."
+      ? "In db/schema.ts, table orders. Marking an order paid writes there but never updates today’s total, which is why that check fails."
       : "This is a demo, so I can only answer from the plan. Everything the app does is in the Plan tab.";
     return { ...withUser, chat: [...withUser.chat, { id: uid(), type: "ai", text: answer }] };
   }

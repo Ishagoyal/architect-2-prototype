@@ -15,6 +15,8 @@ import { JourneyBar, CurrentStage } from "./JourneyBar";
 import { PanelBody, needsCount } from "./Panel";
 import { ProjectUIContext } from "./ProjectUI";
 import { useProject } from "@/lib/projects";
+import { useViewer } from "@/lib/viewer-context";
+import { DEMO_PROJECT_ID } from "@/lib/demo";
 import { useCreditsUsed } from "@/lib/credits";
 import { deployLabel, timeAgo, type Project } from "@/lib/model";
 
@@ -114,14 +116,22 @@ function ChatButton({ count, onClick, className = "" }: { count: number; onClick
   );
 }
 
-function Missing() {
+function Missing({ id }: { id: string }) {
+  // In the demo, the meal app only exists once "Build from a prompt" has built it.
+  const unbuilt = useViewer().kind === "demo" && id === DEMO_PROJECT_ID;
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
-      <h1 className="font-serif text-4xl">This project isn’t here</h1>
-      <p className="max-w-sm text-sm text-ink-2">It may have been made in another browser, or in a demo that has since been left.</p>
-      <Link href="/home" className="mt-2 flex h-10 items-center rounded-[10px] bg-primary px-4 text-[13px] font-medium text-on-primary">
-        Back to Home
-      </Link>
+    <div className="flex min-h-dvh flex-col">
+      <DemoStrip />
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+        <h1 className="font-serif text-4xl">{unbuilt ? "Abhi Kya Banega isn’t built yet" : "This project isn’t here"}</h1>
+        <p className="max-w-sm text-sm text-ink-2">
+          {unbuilt ? "Build it from Home first, then come back." : "It may have been made in another browser, or in a demo that has since been left."}
+        </p>
+        <Link href="/home" className="mt-2 flex h-10 items-center rounded-[10px] bg-primary px-4 text-[13px] font-medium text-on-primary">
+          Back to Home
+        </Link>
+      </div>
+      <TourGuide />
     </div>
   );
 }
@@ -149,7 +159,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
   }, []);
 
   if (!loaded) return <div className="h-dvh bg-bg" />;
-  if (!project) return <Missing />;
+  if (!project) return <Missing id={id} />;
 
   const base = `/p/${project.id}`;
   const isActive = (path: string) => pathname === `${base}/${path}` || pathname.startsWith(`${base}/${path}/`);

@@ -7,6 +7,8 @@ import { Sheet } from "./Sheet";
 import { useDismiss } from "./useDismiss";
 import { useViewer } from "@/lib/viewer-context";
 import { journeys, useTour, type JourneyKey } from "@/lib/tour";
+import { useProjects } from "@/lib/projects";
+import { DEMO_PROJECT_ID } from "@/lib/demo";
 
 /* The reviewer checklist: the five journeys, ticked once opened. Only shown in the demo. */
 
@@ -28,12 +30,16 @@ function useAutoOpen(media: string, open: () => void) {
 }
 
 function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => void }) {
+  // Agents, GitHub and Deploy use the app from the first journey; until it's built, they start at Home.
+  const { projects } = useProjects();
+  const built = projects.some((p) => p.id === DEMO_PROJECT_ID && p.build.status === "done");
+  const needsApp = (k: string) => !built && (k === "agents" || k === "github" || k === "deploy");
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-1">
         <span className="text-[15px] font-semibold">Five things to try</span>
         <span className="text-[13px] text-ink-2">
-          This demo has made-up data, so click anything. Pick one and a guide tells you what to click, step by step.
+          You build one app, then try its agents, GitHub and going live. Pick one and press Show me to watch each step.
         </span>
       </div>
       <ol className="flex flex-col gap-1">
@@ -42,8 +48,8 @@ function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => v
           return (
             <li key={j.key}>
               <Link
-                href={j.href}
-                onClick={() => onPick(j.key)}
+                href={needsApp(j.key) ? "/home" : j.href}
+                onClick={() => onPick(needsApp(j.key) ? "prompt" : j.key)}
                 className="flex items-start gap-3 rounded-[10px] p-2.5 hover:bg-hover"
               >
                 <span
@@ -56,7 +62,7 @@ function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => v
                 </span>
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-sm font-medium">{j.title}</span>
-                  <span className="text-xs text-ink-2">{j.detail}</span>
+                  <span className="text-xs text-ink-2">{needsApp(j.key) ? `${j.detail}. Build the app first` : j.detail}</span>
                 </span>
               </Link>
             </li>

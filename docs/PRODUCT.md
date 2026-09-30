@@ -241,7 +241,7 @@ Today's Architect, Lovable, v0 and Bolt all use chat on one side and the app on 
 - **The flow:** pick the repo from Home, then everything happens inside the new project: add its keys, then check the plan.
 - **"Here's what we think your app does" uses the same design as the plan:** the same 10 sections, written from the code (screens found, agents found, what it saves, keys, what works today, notes for AI tools, open questions). **The user must confirm it before building**, because every build and every check depends on it. It's quick: **Looks right** in one click, or **Fix it by chat**. Until then, Ask mode works (questions about the code change nothing).
 - **Developer view turns on** after an import: "Developer view is on because you imported a project · Turn off".
-- **Coming back later:** if you leave before finishing, Home says what's left: "CookBridge is imported. 2 things left before you can build" with a checklist and **Continue setup**.
+- **Coming back later:** if you leave before finishing, Home says what's left: "OrderBook is imported. 2 things left before you can build" with a checklist and **Continue setup**.
 
 ## GitHub
 
