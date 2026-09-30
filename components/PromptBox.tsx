@@ -61,7 +61,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
               go();
             }
           }}
-          placeholder="Describe your app — e.g. an agent that answers customer questions from our help docs"
+          placeholder="Describe your app — e.g. an app that reminds my team about unpaid invoices"
           rows={3}
           className="min-h-[72px] resize-none border-0 bg-transparent p-0 text-base leading-normal outline-none placeholder:text-ink-3 md:text-[17px]"
         />

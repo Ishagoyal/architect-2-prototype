@@ -27,7 +27,7 @@ function stepFor(key: JourneyKey, since: number, path: string, projects: Project
       const np = projects.filter((p) => !p.imported && p.id !== DEMO_PROJECT_ID && p.createdAt >= since).sort((a, b) => b.createdAt - a.createdAt)[0];
       if (!np) {
         if (path.startsWith("/new"))
-          return { n: 3, of: 6, text: "Architect read the idea and filled in the details: the name, what it does, who it’s for and the app’s AI. Nothing is built yet. Next, Show me confirms these.", acts: [{ click: '[data-tour="refine-confirm"]' }] };
+          return { n: 3, of: 6, text: "Architect read the idea and filled in the name, what it does and the app’s AI. Who it’s for is left empty, because the idea didn’t say. Nothing is built yet. Next, Show me confirms these.", acts: [{ click: '[data-tour="refine-confirm"]' }] };
         if (path === "/home")
           return { n: 2, of: 6, text: "This is Home, where you describe an app in your own words. Next, Show me picks one of the ideas and sends it.", acts: [{ click: '[data-tour="idea"]' }, { click: '[data-tour="send"]' }] };
         return { n: 1, of: 6, text: "This is Abhi Kya Banega, a sample app that’s already built, so you have something to look at. Let’s build a new app from one sentence. Show me opens Home.", acts: [{ go: "/home" }] };
@@ -51,7 +51,7 @@ function stepFor(key: JourneyKey, since: number, path: string, projects: Project
         return {
           n: 5,
           of: 6,
-          text: `Step ${np.stepsDone} is built: ${lowerFirst(built.builds)} Next, Show me builds step ${np.build.step + 1}: ${lowerFirst(cur.title)}.`,
+          text: `Step ${np.stepsDone} is built: ${lowerFirst(built.builds)} The blue box shows what it made. Next, Show me builds step ${np.build.step + 1}: ${lowerFirst(cur.title)}.`,
           acts: [...onApp, { click: '[data-tour="continue"]' }],
         };
       }

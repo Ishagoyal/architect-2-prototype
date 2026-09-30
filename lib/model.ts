@@ -188,9 +188,20 @@ export function nameFromIdea(idea: string) {
 
 export function whatFromIdea(idea: string) {
   if (isMealIdea(idea))
-    return "Suggests three complete Indian meals from what's in the kitchen right now, using inventory updates the family sends in Hinglish or as photos.";
+    return "Suggests three complete Indian meals from what’s in the kitchen right now, using inventory updates the family sends in Hinglish or as photos.";
   const t = idea.trim().replace(/^(an?|the)\s+/i, "");
-  return t ? t[0].toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? "" : ".") : "";
+  if (!t) return "";
+  const said = t[0].toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? "" : ".");
+  const tpl = templateFor(idea);
+  if (tpl === fallbackTemplate) return said;
+  // Add what the app keeps, so the field says more than the prompt did.
+  const kept = tpl.saves.map(([label]) => label.toLowerCase());
+  return `${said} Keeps ${kept.slice(0, -1).join(", ")} and ${kept[kept.length - 1]} in one place.`;
+}
+
+/** What the app's AI does, as a sentence: "It tags and summarises each interview." */
+export function aiTaskFromIdea(idea: string) {
+  return `It ${templateFor(idea).aiVerb}.`;
 }
 
 export function instructionsFromIdea(idea: string) {
@@ -378,7 +389,7 @@ export const mealTemplate: Template = {
 export function mealPlan(): Plan {
   return {
     tagline: "Meal ideas from what’s in your kitchen",
-    what: "Suggests 3 Indian meals from what's in your kitchen. The family confirms one, and the stock goes down. Updates can be typed in Hinglish or sent as a photo.",
+    what: "Suggests 3 Indian meals from what’s in your kitchen. The family confirms one, and the stock goes down. Updates can be typed in Hinglish or sent as a photo.",
     why: "every evening the same question, “abhi kya banega?”, and the answer depends on what’s left in the kitchen.",
     people: [
       ["Owner", "Sets up the kitchen, invites family, changes settings"],
@@ -439,7 +450,7 @@ export function mealPlan(): Plan {
       },
       {
         title: "Meal suggestions",
-        sub: "The app's AI suggests 3 meals from what's in the kitchen",
+        sub: "The app’s AI suggests 3 meals from what’s in the kitchen",
         kind: "ai",
         checks: ["Shows exactly 3 meals", "Only uses items that are in the kitchen", "Doesn’t repeat a dish from the last 3 days"],
         cost: [1.5, 4],

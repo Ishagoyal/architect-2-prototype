@@ -13,7 +13,7 @@ const points: React.ReactNode[] = [
   "Agents built in: Lyzr or the framework you use, saved as files you own",
   "Bring what you've built: GitHub, a ZIP, Lovable, Bolt or v0",
   <>
-    <strong className="font-semibold">You&apos;ll know when something breaks. Your users won&apos;t.</strong> A broken
+    <strong className="font-semibold">You’ll know when something breaks. Your users won’t.</strong> A broken
     update never reaches them, and a failed daily run shows you the exact step
   </>,
   "Know the cost: what each step usually takes before you build, and what it really used after",
@@ -85,7 +85,7 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
             ))}
           </ul>
           <p className="mt-1 hidden text-[15px] text-[#CFCBC2] italic md:block">
-            On Auto if you don&apos;t code. Full control if you do.
+            On Auto if you don’t code. Full control if you do.
           </p>
         </div>
         <div className="-mb-2 -ml-2 hidden md:block">

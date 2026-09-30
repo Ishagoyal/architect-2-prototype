@@ -141,7 +141,9 @@ function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; 
   const c = paletteFor(p, dark);
   const { running, cur, itemsVisible, buttonVisible } = progress(p, now);
   const building = running || p.build.status === "stopped" || p.build.status === "waiting";
-  const next = building ? p.plan.steps[p.build.step + 1] : undefined;
+  // While waiting, build.step already points at the step that's next.
+  const nextIdx = p.build.status === "waiting" ? p.build.step : p.build.step + 1;
+  const next = building ? p.plan.steps[nextIdx] : undefined;
   const phone = device === "phone";
   const screen = p.plan.screens[page] ?? p.plan.screens[0];
   const [edits, setEdits] = useState<Record<number, string>>({});
@@ -227,7 +229,7 @@ function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; 
       )}
       {next && (
         <div className="rounded-xl border border-dashed p-3.5 text-[13px]" style={{ borderColor: c.border, color: c.sub }}>
-          Coming next: {next.title} (step {p.build.step + 2})
+          Coming next: {next.title} (step {nextIdx + 1})
         </div>
       )}
     </div>
@@ -405,8 +407,8 @@ export function AppView({ project: p, update, now }: { project: Project; update:
                 {p.imported && p.build.status === "idle"
                   ? "6 of 8 things work today · see the plan"
                   : p.build.status === "done"
-                    ? `Every check passed · used ${p.creditsUsed}% of this month’s credits`
-                    : `Used ${p.creditsUsed}% of this month’s credits so far`}
+                    ? `Every check passed · this build used ${p.creditsUsed}% of the month’s credits`
+                    : `This build has used ${p.creditsUsed}% of the month’s credits so far`}
               </span>
             </>
           )}
