@@ -50,7 +50,7 @@ export function DatabaseView({ project: p, update }: { project: Project; update:
         </span>
       </div>
       <div className="flex flex-col gap-4 p-4 md:p-5">
-        <div className={`flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 text-[13px] ${live ? "bg-sunken" : "bg-info-soft text-info"}`}>
+        <div data-scene="db-note" className={`flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 text-[13px] ${live ? "bg-sunken" : "bg-info-soft text-info"}`}>
           <span>
             {live ? (
               <>
@@ -75,11 +75,11 @@ export function DatabaseView({ project: p, update }: { project: Project; update:
               </button>
             ))}
           </div>
-          <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+          <div data-scene="db-table" className="overflow-hidden rounded-2xl border border-line bg-panel">
             <div className="flex flex-wrap items-center justify-between gap-2 p-4">
               <span className="flex flex-col">
                 <span className="text-lg font-semibold">{table}</span>
-                <span className="text-xs text-ink-2">{live && !isLive ? "empty" : `${rows.length} rows`}</span>
+                <span className="text-xs text-ink-2">{live && !isLive ? "empty" : `${rows.length} ${table === "Members" ? (rows.length === 1 ? "person" : "people") : rows.length === 1 ? "row" : "rows"}`}</span>
               </span>
               <span className="flex gap-2">
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${table.toLowerCase()}`} className="h-9 w-44 rounded-[10px] border border-line-strong bg-raised px-3 text-[13px] placeholder:text-ink-3" />

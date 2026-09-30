@@ -138,6 +138,7 @@ function Missing({ id }: { id: string }) {
 
 export function ProjectShell({ id, children }: { id: string; children: React.ReactNode }) {
   const { project, loaded, update, now } = useProject(id);
+  const viewer = useViewer();
   const credits = useCreditsUsed();
   const pathname = usePathname();
   const [panelSheet, setPanelSheet] = useState(false);
@@ -162,6 +163,8 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
   if (!project) return <Missing id={id} />;
 
   const base = `/p/${project.id}`;
+  // Scenes aren't signed in, so "back" goes to the landing page instead of Home.
+  const scene = viewer.kind === "scene";
   const isActive = (path: string) => pathname === `${base}/${path}` || pathname.startsWith(`${base}/${path}/`);
   const moreActive = ["database", "code", "settings"].some(isActive);
   const count = needsCount(project);
@@ -173,7 +176,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
         <DemoStrip />
         <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-line bg-panel px-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 md:gap-3.5">
-            <Link href="/home" aria-label="Back to Home" className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink-2 hover:bg-hover md:hidden">
+            <Link href={scene ? "/" : "/home"} aria-label={scene ? "Back to the story" : "Back to Home"} className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink-2 hover:bg-hover md:hidden">
               <Icon name="back" size={18} strokeWidth={2} />
             </Link>
             <ProjectMark project={project} />
@@ -219,8 +222,8 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
         <div className="flex min-h-0 flex-1">
           <nav aria-label="Project" className="hidden w-16 shrink-0 flex-col gap-0.5 border-r border-line bg-rail px-2 py-3.5 md:flex xl:w-[200px] xl:px-3">
             <Link
-              href="/projects"
-              title="Projects"
+              href={scene ? "/" : "/projects"}
+              title={scene ? "Back to the story" : "Projects"}
               className="mb-2 flex h-10 items-center justify-center gap-2 rounded-[10px] text-[13px] text-ink-2 hover:bg-hover xl:justify-start xl:px-2.5"
             >
               <Icon name="back" size={15} strokeWidth={2} />

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { planTotals, STEP_MS, timeAgo, type Project } from "@/lib/model";
-import { btnOutline } from "../Modal";
+import { acceptCheckChange, planTotals, rejectCheckChange, STEP_MS, timeAgo, type Project } from "@/lib/model";
+import { btnOutline, btnPrimary } from "../Modal";
 
 /* Design A21: checks live in their own tab, grouped by step, plus whole-app checks at the end.
    A check for a step that isn't built yet says "Not run yet", never "Failed". */
@@ -18,7 +18,52 @@ function Pill({ state, when }: { state: "passed" | "running" | "not-run"; when?:
   return <span className="shrink-0 rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-ink-2">Not run yet</span>;
 }
 
-export function TestsView({ project: p, now }: { project: Project; now: number }) {
+/** The AI wants to change a check. Nothing changes until the person says so. */
+function CheckChangeCard({ p, update }: { p: Project; update: (fn: (p: Project) => Project) => void }) {
+  const c = p.checkChange;
+  if (!c) return null;
+  const waiting = c.status === "waiting";
+  return (
+    <section
+      data-scene="check-change"
+      aria-label="Check change"
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${waiting ? "border-accent-line bg-needs" : "border-line bg-panel"}`}
+    >
+      <span className="flex min-w-0 flex-1 basis-[280px] flex-col gap-0.5">
+        <strong className="text-sm font-semibold">
+          {waiting ? "The AI wants to change a check" : c.status === "accepted" ? "Check changed, with your OK" : "Check kept as you wrote it"}
+        </strong>
+        <span className="text-[13px] text-ink-2">
+          {waiting ? (
+            <>
+              “{c.from}” → “{c.to}” · Reason: {c.reason}
+            </>
+          ) : c.status === "accepted" ? (
+            <>
+              It now says “{c.to}”. Before, it said “{c.from}”.
+            </>
+          ) : (
+            <>
+              It still says “{c.from}”. The AI will make the app meet it instead.
+            </>
+          )}
+        </span>
+      </span>
+      {waiting && (
+        <span className="flex gap-2">
+          <button type="button" onClick={() => update((q) => acceptCheckChange(q))} className={btnPrimary}>
+            Accept
+          </button>
+          <button type="button" onClick={() => update((q) => rejectCheckChange(q))} className={btnOutline}>
+            Reject
+          </button>
+        </span>
+      )}
+    </section>
+  );
+}
+
+export function TestsView({ project: p, update, now }: { project: Project; update: (fn: (p: Project) => Project) => void; now: number }) {
   const [rerun, setRerun] = useState(0);
   const rerunning = now - rerun < 2500;
   const t = planTotals(p.plan);
@@ -45,6 +90,7 @@ export function TestsView({ project: p, now }: { project: Project; now: number }
       </div>
 
       <div className="flex flex-col gap-3.5 p-4 md:p-5">
+        <CheckChangeCard p={p} update={update} />
         {p.plan.steps.map((s, i) => {
           const running = p.build.status === "running" && p.build.step === i;
           const frac = running ? (now - p.build.since) / STEP_MS : 0;

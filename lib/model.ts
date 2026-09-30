@@ -62,8 +62,12 @@ export type Version = {
   files: string[];
   badge?: "live" | "stopped";
   pinned?: boolean;
+  /** "Fix it" was pressed for a check this version broke (design A22). */
+  fixing?: boolean;
+  /** The version that fixed it. */
+  fixedIn?: number;
   /** What the project looked like at this version, so "Go back" can restore it. */
-  snap?: { plan: Plan; stepsDone: number };
+  snap?: { plan: Plan; stepsDone: number; agentEdits?: Project["agentEdits"] };
 };
 
 export type ChatItem =
@@ -124,8 +128,22 @@ export type Project = {
   agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
   /** GitHub (designs D1–D5). */
   github?: { repo: string; own: boolean; behind: number; clash: boolean };
+  /** The AI wants to change a check's wording; it waits for the person (design A21). */
+  checkChange?: CheckChange;
+  /** A broken check being fixed: version `n` broke `check` (design A22). */
+  fix?: { n: number; check: string; since: number };
   createdAt: number;
   updatedAt: number;
+};
+
+export type CheckChange = {
+  /** Which step's check, and which one in its list. */
+  step: number;
+  index: number;
+  from: string;
+  to: string;
+  reason: string;
+  status: "waiting" | "accepted" | "rejected";
 };
 
 /** Going live (designs E1–E4). */
@@ -749,7 +767,7 @@ function stepDone(p: Project, at: number): Project {
     checks: step.checks.map((c) => [c, "not run", "passed"]),
     cost: `${used}% of this month’s credits`,
     files: step.files,
-    snap: { plan: p.plan, stepsDone: i + 1 },
+    snap: { plan: p.plan, stepsDone: i + 1, agentEdits: p.agentEdits },
   };
   const wait = !!next && (!!p.reviewOn || !!p.stepByStep);
   const chat: ChatItem[] = [
@@ -796,6 +814,8 @@ export function advance(p: Project, now = Date.now()): Project {
         ],
         updatedAt: q.build.since + CHECK_MS,
       };
+    } else if (q.fix && now - q.fix.since >= STEP_MS) {
+      q = finishFix(q, q.fix.since + STEP_MS);
     } else if (q.deploy?.status === "deploying" && now - q.deploy.since >= DEPLOY_STEP_MS * (DEPLOY_STEPS - 1)) {
       q = finishDeploy(q, q.deploy.since + DEPLOY_STEP_MS * (DEPLOY_STEPS - 1));
     } else break;
@@ -904,7 +924,7 @@ export function stopBuild(p: Project, now = Date.now()): Project {
         cost: "1% of this month’s credits",
         files: step.files.slice(0, 1),
         badge: "stopped",
-        snap: { plan: p.plan, stepsDone: p.stepsDone },
+        snap: { plan: p.plan, stepsDone: p.stepsDone, agentEdits: p.agentEdits },
       },
       ...p.versions,
     ],
@@ -913,12 +933,15 @@ export function stopBuild(p: Project, now = Date.now()): Project {
   };
 }
 
-export function goBackTo(p: Project, n: number, now = Date.now()): Project {
+const onlyLabel = { code: "the code", plan: "the plan", ai: "the app’s AI" } as const;
+
+/** `only`: Developer view can take back just one part (design A23). */
+export function goBackTo(p: Project, n: number, now = Date.now(), only?: keyof typeof onlyLabel): Project {
   const to = p.versions.find((v) => v.n === n);
   if (!to) return p;
   const next = p.versions[0].n + 1;
   // Older saved versions have no snapshot: work out the steps from the title ("Step 2: …").
-  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone) };
+  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone), agentEdits: p.agentEdits };
   const done = Math.min(snap.stepsDone, snap.plan.steps.length);
   const complete = done >= snap.plan.steps.length;
   const build: Build = complete
@@ -926,29 +949,131 @@ export function goBackTo(p: Project, n: number, now = Date.now()): Project {
     : done === 0
       ? { status: "idle", step: 0, since: now }
       : { status: "stopped", step: done, since: now };
+  // Only the plan or only the app's AI: what's built stays as it is.
+  const keepBuild = only === "plan" || only === "ai";
+  // The app's AI is the plan's AI section and the saved changes to its agents.
+  const plan =
+    only === "plan"
+      ? { ...(snap.plan.steps.length >= p.stepsDone ? snap.plan : p.plan), ai: p.plan.ai }
+      : only === "ai"
+        ? { ...p.plan, ai: snap.plan.ai }
+        : only === "code"
+          ? p.plan
+          : snap.plan;
+  const agentEdits = !only || only === "ai" ? snap.agentEdits : p.agentEdits;
   return {
     ...p,
-    plan: snap.plan,
-    stepsDone: done,
-    build,
-    stage: complete ? "test" : done === 0 ? "plan" : "build",
+    plan,
+    agentEdits,
+    fix: undefined,
+    ...(keepBuild ? {} : { stepsDone: done, build, stage: complete ? ("test" as const) : done === 0 ? ("plan" as const) : ("build" as const) }),
     suggestion: null,
     versions: [
       {
         n: next,
-        title: `Went back to v${n}`,
+        title: only ? `Went back to v${n} (only ${onlyLabel[only]})` : `Went back to v${n}`,
         at: now,
-        summary: `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`,
-        parts: ["Plan", "Code", "App’s AI"],
+        summary: only
+          ? `${onlyLabel[only][0].toUpperCase()}${onlyLabel[only].slice(1)} went back to v${n} (${lowerFirst(to.title)}). Everything else stayed as it was. Your app’s data stayed.`
+          : `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`,
+        parts: only ? [{ code: "Code", plan: "Plan", ai: "App’s AI" }[only]] : ["Plan", "Code", "App’s AI"],
         checks: [],
         cost: "No credits",
         files: to.files,
-        snap: { plan: snap.plan, stepsDone: done },
+        snap: { plan, stepsDone: keepBuild ? p.stepsDone : done, agentEdits },
       },
       ...p.versions,
     ],
-    chat: [...p.chat, { id: uid(), type: "version", n: next, text: `saved · went back to v${n}` }],
+    chat: [...p.chat, { id: uid(), type: "version", n: next, text: `saved · went back to v${n}${only ? ` (only ${onlyLabel[only]})` : ""}` }],
     updatedAt: now,
+  };
+}
+
+/* ---------- A check change waits for the person (design A21) ---------- */
+
+export function acceptCheckChange(p: Project, now = Date.now()): Project {
+  const c = p.checkChange;
+  if (!c || c.status !== "waiting") return p;
+  return {
+    ...p,
+    plan: { ...p.plan, steps: p.plan.steps.map((s, i) => (i === c.step ? { ...s, checks: s.checks.map((x, k) => (k === c.index ? c.to : x)) } : s)) },
+    checkChange: { ...c, status: "accepted" },
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Changed the check to “${c.to}”, as you agreed.` }],
+    updatedAt: now,
+  };
+}
+
+export function rejectCheckChange(p: Project, now = Date.now()): Project {
+  const c = p.checkChange;
+  if (!c || c.status !== "waiting") return p;
+  return {
+    ...p,
+    checkChange: { ...c, status: "rejected" },
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Kept the check “${c.from}”. I’ll make the meal suggestions meet it instead.` }],
+    updatedAt: now,
+  };
+}
+
+/* ---------- A change broke a check that used to pass (design A22) ---------- */
+
+/** The first check a version turned from passed to failed. */
+export function brokenCheck(v: Version) {
+  return v.checks.find(([, before, after]) => before === "passed" && after === "failed")?.[0];
+}
+
+/** "Undo": the newest earlier version that was built and tested. */
+export function undoTarget(p: Project, n: number) {
+  return p.versions.find((v) => v.n < n && v.badge !== "stopped");
+}
+
+export function fixBrokenCheck(p: Project, n: number, now = Date.now()): Project {
+  const v = p.versions.find((x) => x.n === n);
+  const check = v && brokenCheck(v);
+  if (!v || !check) return p;
+  if (p.fix) return p;
+  return {
+    ...p,
+    fix: { n, check, since: now },
+    versions: p.versions.map((x) => (x.n === n ? { ...x, fixing: true } : x)),
+    chat: [
+      ...p.chat,
+      { id: uid(), type: "user", text: `Fix “${check}”` },
+      { id: uid(), type: "ai", text: `Fixing it: v${n} (${lowerFirst(v.title)}) broke “${check}”. I’ll change only what’s needed, run every check again and save it as a new version.` },
+    ],
+    updatedAt: now,
+  };
+}
+
+/** The fix is done: saved as a new version, with every check of the broken one passing again. */
+function finishFix(p: Project, at: number): Project {
+  const f = p.fix!;
+  const broke = p.versions.find((v) => v.n === f.n);
+  const n = p.versions[0].n + 1;
+  const checks: [string, string, string][] = (broke?.checks ?? [[f.check, "failed", "passed"]]).map(([name, , after]) => [name, after, "passed"]);
+  return {
+    ...p,
+    fix: undefined,
+    versions: [
+      {
+        n,
+        title: `Fixed “${f.check}”`,
+        at,
+        summary: `v${f.n} broke “${f.check}”. Changed only what was needed, then ran every check again: they all pass.`,
+        parts: ["Code · 1 file"],
+        checks,
+        cost: "1% of this month’s credits",
+        files: broke?.files.slice(0, 1) ?? [],
+        snap: { plan: p.plan, stepsDone: p.stepsDone, agentEdits: p.agentEdits },
+      },
+      ...p.versions.map((v) => (v.n === f.n ? { ...v, fixing: false, fixedIn: n } : v)),
+    ],
+    chat: [
+      ...p.chat,
+      { id: uid(), type: "step", title: `Fixed: ${f.check}`, detail: `${checks.length} of ${checks.length} checks passed · used 1% of this month’s credits` },
+      { id: uid(), type: "version", n, text: `saved · fixed “${f.check}”` },
+    ],
+    creditsUsed: p.creditsUsed + 1,
+    updatedAt: at,
   };
 }
 

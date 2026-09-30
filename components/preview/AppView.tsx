@@ -135,6 +135,76 @@ function ResultBanner({ p, now }: { p: Project; now: number }) {
 
 /* ---------- The user's app ---------- */
 
+const kitchenStock = [
+  ["Atta", "2 kg", "Updated today"],
+  ["Toor dal", "500 g", "Updated today"],
+  ["Aloo", "1 kg", "3 days ago · may be out of date"],
+  ["Tamatar", "Out", "Updated today"],
+];
+
+/** The meal app's Kitchen page, once step 4 (inventory) is built (design A15). */
+function Kitchen({ c, phone }: { c: Palette; phone: boolean }) {
+  const [text, setText] = useState("2 kg atta aaya, tamatar khatam");
+  const [done, setDone] = useState(false);
+  return (
+    <>
+      <form
+        className={`flex gap-2 ${phone ? "flex-wrap" : ""}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setDone(true);
+        }}
+      >
+        <input
+          aria-label="What came in or ran out"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setDone(false);
+          }}
+          className="h-11 min-w-0 flex-1 rounded-[10px] border px-3 text-sm outline-none"
+          style={{ background: c.card, borderColor: c.border, color: c.text }}
+        />
+        <button type="submit" className="h-11 rounded-[10px] px-4 text-sm font-medium" style={{ background: c.button, color: c.onButton }}>
+          Update
+        </button>
+        <button type="button" className="h-11 rounded-[10px] border px-4 text-sm" style={{ background: c.card, borderColor: c.border, color: c.text }}>
+          Photo
+        </button>
+      </form>
+      {done && (
+        <span className="text-[13px] font-medium" style={{ color: c.meta }}>
+          Updated the kitchen ✓
+        </span>
+      )}
+      <div className="overflow-x-auto rounded-[10px] border" style={{ background: c.card, borderColor: c.border }}>
+        <table className="w-full min-w-[360px] text-left text-[13px]">
+          <thead>
+            <tr style={{ color: c.sub }}>
+              {["Item", "Stock", "Last update"].map((h) => (
+                <th key={h} className="px-3.5 py-2.5 font-semibold">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {kitchenStock.map(([item, stock, when]) => (
+              <tr key={item} className="border-t" style={{ borderColor: c.border }}>
+                <td className="px-3.5 py-2.5">{item}</td>
+                <td className="px-3.5 py-2.5">{stock}</td>
+                <td className="px-3.5 py-2.5" style={{ color: c.sub }}>
+                  {when}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 type Sel = { on: boolean; picked: number | null; pick: (i: number | null) => void };
 
 function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; now: number; page: number; device: "desktop" | "phone"; dark: boolean; sel: Sel; testUser: boolean }) {
@@ -148,8 +218,9 @@ function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; 
   const screen = p.plan.screens[page] ?? p.plan.screens[0];
   const [edits, setEdits] = useState<Record<number, string>>({});
 
+  const kitchen = p.kind === "meal" && page === 1 && p.stepsDone >= 4;
   const eyebrow = page === 0 ? p.template.eyebrow : screen.title.toUpperCase();
-  const heading = page === 0 ? p.template.heading : screen.label;
+  const heading = kitchen ? "Kitchen mein kya hai?" : page === 0 ? p.template.heading : screen.label;
   const items =
     page === 0
       ? p.template.items
@@ -165,13 +236,17 @@ function AppScreen({ p, now, page, device, dark, sel, testUser }: { p: Project; 
           Signed in as a test user · sample data
         </span>
       )}
-      <span className="text-xs font-semibold tracking-[0.08em]" style={{ color: c.eyebrow }}>
-        {eyebrow}
-      </span>
+      {!kitchen && (
+        <span className="text-xs font-semibold tracking-[0.08em]" style={{ color: c.eyebrow }}>
+          {eyebrow}
+        </span>
+      )}
       <span className={`font-serif leading-none ${phone ? "text-[30px]" : "text-[40px]"}`} style={{ color: c.heading }}>
         {heading}
       </span>
-      {itemsVisible || page > 0 ? (
+      {kitchen ? (
+        <Kitchen c={c} phone={phone} />
+      ) : itemsVisible || page > 0 ? (
         <div className={`grid gap-3 ${phone ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-3"}`}>
           {items.map((m, i) => {
             const picked = sel.on && sel.picked === i;
@@ -320,7 +395,7 @@ function MoreMenu({ p, look, setLook, restart }: { p: Project; look: "auto" | "l
 
 /* ---------- The tab ---------- */
 
-export function AppView({ project: p, update, now }: { project: Project; update: Update; now: number }) {
+export function AppView({ project: p, update, now, initialPage = 0 }: { project: Project; update: Update; now: number; initialPage?: number }) {
   const { resolvedTheme } = usePrefs();
   const { openPanel } = useProjectUI();
   const [device, setDevice] = useState<"desktop" | "phone">("desktop");
@@ -328,7 +403,7 @@ export function AppView({ project: p, update, now }: { project: Project; update:
   const [picked, setPicked] = useState<number | null>(null);
   const [change, setChange] = useState("");
   const [testUser, setTestUser] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(initialPage < p.plan.screens.length ? initialPage : 0);
   const [look, setLook] = useState<"auto" | "light" | "dark">("auto");
   const [stopping, setStopping] = useState(false);
   const [restarted, setRestarted] = useState(0);
@@ -376,12 +451,20 @@ export function AppView({ project: p, update, now }: { project: Project; update:
 
   return (
     <>
-      <div className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2 text-[13px] md:px-5">
+      <div data-scene="build-status" className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2 text-[13px] md:px-5">
         <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           {select ? (
             <>
               <strong className="font-semibold">Your app</strong>
               <span className="text-ink-2">Click any part to change it</span>
+            </>
+          ) : p.build.status === "waiting" ? (
+            /* A15: a finished step waits for the person before the next one starts. */
+            <>
+              <strong className="font-semibold">
+                Step {p.stepsDone} of {total} ready: {lowerFirst(p.plan.steps[p.stepsDone - 1].title)}
+              </strong>
+              <span className="text-ink-2">Waiting for you · built on a copy, your app is unchanged</span>
             </>
           ) : (
             <>
@@ -390,9 +473,7 @@ export function AppView({ project: p, update, now }: { project: Project; update:
                   ? "Your imported app, running in its own sandbox"
                   : p.build.status === "running"
                   ? `Building step ${p.build.step + 1} of ${total}: ${lowerFirst(p.plan.steps[p.build.step].title)}`
-                  : p.build.status === "waiting"
-                    ? `Step ${p.stepsDone} of ${total} is ready for your review`
-                    : p.build.status === "stopped"
+                  : p.build.status === "stopped"
                     ? `Stopped at step ${p.build.step + 1} of ${total}`
                     : p.build.status === "checking"
                       ? "Checking the whole app"

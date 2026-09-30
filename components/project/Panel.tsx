@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "../Icon";
 import { useDismiss } from "../useDismiss";
 import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } from "@/lib/chat";
-import { continueBuild, lowerFirst, planTotals, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
+import { acceptCheckChange, continueBuild, lowerFirst, planTotals, rejectCheckChange, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
@@ -37,6 +37,18 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
     needs.push({ id: "clash", title: "1 file needs your choice", lines: ["The other 2 changes from GitHub came in without problems."], actions: [{ label: "Choose", primary: true, href: `${base}/settings?tab=github` }] });
   else if (project.github && project.github.behind > 0)
     needs.push({ id: "behind", title: `${project.github.behind} new changes on GitHub`, lines: ["Rahul changed lib/parse-hinglish.ts and 2 other files."], actions: [{ label: "Get latest", primary: true, href: `${base}/settings?tab=github` }] });
+  if (project.checkChange?.status === "waiting") {
+    const c = project.checkChange;
+    needs.push({
+      id: "check-change",
+      title: "A check change needs your OK",
+      lines: [`“${c.from}” → “${c.to}”`],
+      actions: [
+        { label: "Accept", primary: true, onClick: () => update((p) => acceptCheckChange(p)) },
+        { label: "Reject", onClick: () => update((p) => rejectCheckChange(p)) },
+      ],
+    });
+  }
   if (project.suggestion)
     needs.push({
       id: "suggestion",
@@ -154,6 +166,7 @@ export function needsCount(project: Project) {
   let n = 0;
   if (project.imported && project.imported.setup !== "done") n++;
   if (project.github && (project.github.clash || project.github.behind > 0)) n++;
+  if (project.checkChange?.status === "waiting") n++;
   if (project.suggestion) n++;
   if (project.build.status === "stopped" || project.build.status === "waiting") n++;
   if (project.deploy?.status === "failed") n++;

@@ -102,31 +102,41 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
             </span>
             <Switch on={devView} />
           </button>
-          <Link
-            href="/settings"
-            role="menuitem"
-            onClick={close}
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] hover:bg-hover"
-          >
-            <Icon name="settings" size={15} />
-            Account settings
-          </Link>
-          <form
-            action={signOut}
-            onSubmit={() => {
-              if (viewer.kind !== "demo") return;
-              forgetDemo();
-            }}
-          >
-            <button
-              type="submit"
-              role="menuitem"
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-hover"
-            >
+          {viewer.kind === "scene" ? (
+            // Scenes aren't signed in: the only way out is back to the landing page.
+            <Link href="/" role="menuitem" onClick={close} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] hover:bg-hover">
               <Icon name="back" size={15} />
-              {viewer.kind === "demo" ? "Leave the demo" : "Sign out"}
-            </button>
-          </form>
+              Back to the story
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/settings"
+                role="menuitem"
+                onClick={close}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] hover:bg-hover"
+              >
+                <Icon name="settings" size={15} />
+                Account settings
+              </Link>
+              <form
+                action={signOut}
+                onSubmit={() => {
+                  if (viewer.kind !== "demo") return;
+                  forgetDemo();
+                }}
+              >
+                <button
+                  type="submit"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-hover"
+                >
+                  <Icon name="back" size={15} />
+                  {viewer.kind === "demo" ? "Leave the demo" : "Sign out"}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -4,9 +4,11 @@ import { supabaseConfigured, supabaseKey, supabaseUrl } from "@/lib/supabase/con
 
 /* Runs before each page: keeps the Supabase sign-in fresh, sends people who
    aren't signed in (and aren't trying the demo) to the sign-up screen, and
-   sends people who are signed in past it. */
+   sends people who are signed in past it. The landing page and the six
+   scenes are open to everyone. */
 
-const openPaths = ["/", "/sign-in", "/auth/callback", "/privacy"];
+const openPaths = ["/", "/sign-up", "/sign-in", "/auth/callback", "/privacy"];
+const isScene = (path: string) => /^\/scene\/\d+$/.test(path) || /^\/p\/scene-\d+(\/|$)/.test(path);
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -31,12 +33,12 @@ export async function proxy(request: NextRequest) {
   }
 
   const path = request.nextUrl.pathname;
-  const isOpen = openPaths.includes(path);
+  const isOpen = openPaths.includes(path) || isScene(path);
 
   if (!demo && !signedIn && !isOpen) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/sign-up", request.url));
   }
-  if ((demo || signedIn) && (path === "/" || path === "/sign-in")) {
+  if ((demo || signedIn) && (path === "/sign-up" || path === "/sign-in")) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
   return response;
