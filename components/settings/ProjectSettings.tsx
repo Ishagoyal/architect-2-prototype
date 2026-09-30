@@ -120,9 +120,6 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
   const [moving, setMoving] = useState(false);
   const [name, setName] = useState(p.id.replace(/-[a-z0-9]{4}$/, ""));
   const gh = p.github;
-  const { addOn } = useAddOn();
-  const autoPull = addOn && (p.sync?.pull ?? true);
-
   return (
     <div className="flex flex-col gap-4">
       <div className={card}>
@@ -160,7 +157,7 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
           <div className="flex items-start justify-between gap-2">
             <span className="flex flex-col">
               <span className="text-lg font-semibold">Changes made outside Architect</span>
-              <span className="text-sm text-ink-2">{autoPull ? "Two-way sync brings them in before each build. You can also get them now." : "They only come in when you ask."}</span>
+              <span className="text-sm text-ink-2">They only come in when you ask.</span>
             </span>
             {gh.behind > 0 && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-strong">{gh.behind} new on GitHub</span>}
           </div>
@@ -537,7 +534,7 @@ function TwoWaySync({ project: p, update }: { project: Project; update: (fn: (p:
       {!addOn ? (
         <>
           <p className="text-sm text-ink-2">
-            Now, changes from GitHub come in when you press Get latest. With the Developer add-on it happens both ways by itself: each version goes to your repo as a pull request, and changes made on GitHub come in on their own.
+            With the Developer add-on your own repo stays in step both ways: each version goes to it as a pull request, and you’re told as soon as someone changes it on GitHub, so you can get their changes.
           </p>
           <UnlockButton className={`${btnPrimary} self-start`}>Unlock two-way sync</UnlockButton>
         </>
@@ -545,7 +542,7 @@ function TwoWaySync({ project: p, update }: { project: Project; update: (fn: (p:
         <>
           {([
             ["prs", "Send each version to GitHub as a pull request", "You or a teammate merge it on GitHub, as usual."],
-            ["pull", "Bring in changes made on GitHub", "Before each build. If the same lines changed in both places, you choose."],
+            ["pull", "Tell me when GitHub has new changes", "They come in only when you press Get latest. If the same lines changed in both places, you choose."],
           ] as const).map(([k, title, sub]) => (
             <button key={k} type="button" role="switch" aria-checked={sync[k]} onClick={() => set(k)} className="flex items-start justify-between gap-3 border-t border-line pt-3 text-left">
               <span className="flex flex-col">

@@ -128,7 +128,7 @@ export type Project = {
   agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
   /** Code changed by hand in the Code tab (Developer add-on), by file. */
   codeEdits?: Record<string, string>;
-  /** Two-way sync with your own GitHub repo (Developer add-on). Both on unless turned off. */
+  /** Two-way sync with your own GitHub repo (Developer add-on): versions go out as pull requests; `pull` = tell me about new GitHub changes. Both on unless turned off. */
   sync?: { prs: boolean; pull: boolean };
   /** GitHub (designs D1–D5). */
   github?: { repo: string; own: boolean; behind: number; clash: boolean };
