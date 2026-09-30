@@ -9,6 +9,7 @@ import { BottomTabs, SheetRow } from "../BottomTabs";
 import { Sheet } from "../Sheet";
 import { useDismiss } from "../useDismiss";
 import { TourGuide } from "../TourGuide";
+import { DemoStrip } from "../DemoStrip";
 import { DemoTourCard, DemoTourIcon, DemoTourButton } from "../DemoTour";
 import { JourneyBar, CurrentStage } from "./JourneyBar";
 import { PanelBody, needsCount } from "./Panel";
@@ -159,6 +160,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
   return (
     <ProjectUIContext.Provider value={{ openPanel, highlightNeeds, pointAtNeeds, collapsePanel }}>
       <div className="flex h-dvh flex-col">
+        <DemoStrip />
         <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-line bg-panel px-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 md:gap-3.5">
             <Link href="/home" aria-label="Back to Home" className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink-2 hover:bg-hover md:hidden">
