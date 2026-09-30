@@ -5,7 +5,6 @@ const paths = {
   folder: <path d="M3 7 H9 L11 9 H21 V19 H3 Z" />,
   agent: <><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M12 4 V8" /><path d="M9.5 13 H9.6" /><path d="M14.5 13 H14.6" /></>,
   explore: <><circle cx="12" cy="12" r="9" /><path d="M15 9 L13 13 L9 15 L11 11 Z" /></>,
-  help: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5 C9.5 8 10.6 7 12 7 C13.4 7 14.5 8 14.5 9.3 C14.5 11 12 11.2 12 13" /><path d="M12 16.5 H12.01" /></>,
   credits: <><ellipse cx="12" cy="7" rx="7" ry="3" /><path d="M5 7 V17 C5 18.7 8.1 20 12 20 C15.9 20 19 18.7 19 17 V7" /><path d="M5 12 C5 13.7 8.1 15 12 15 C15.9 15 19 13.7 19 12" /></>,
   settings: <><path d="M4 7 H20" /><path d="M4 17 H20" /><circle cx="9" cy="7" r="2.2" fill="currentColor" /><circle cx="15" cy="17" r="2.2" fill="currentColor" /></>,
   moon: <path d="M20 14.5 A8 8 0 1 1 9.5 4 A6.5 6.5 0 0 0 20 14.5 Z" />,
