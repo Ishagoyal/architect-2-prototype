@@ -2,6 +2,7 @@
 
 import { signOut } from "@/app/actions";
 import { useViewer } from "@/lib/viewer-context";
+import { forgetDemo } from "@/lib/tour";
 
 /* A thin strip on every page in the demo, so people know where they are and how to leave. */
 export function DemoStrip() {
@@ -15,16 +16,7 @@ export function DemoStrip() {
       <form
         action={signOut}
         onSubmit={() => {
-          try {
-            localStorage.removeItem("architect.projects.demo");
-            localStorage.removeItem("architect.projects.demo2");
-            localStorage.removeItem("architect.tour");
-            localStorage.removeItem("architect.tour.active");
-                localStorage.setItem("architect.devView", "off");
-                localStorage.removeItem("architect.github");
-          } catch {
-            /* nothing to clear */
-          }
+          forgetDemo();
         }}
       >
         <button type="submit" className="font-semibold underline underline-offset-2">

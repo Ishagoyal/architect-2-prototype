@@ -8,6 +8,7 @@ import { DevOnly, DevTag } from "./DevTag";
 import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { useViewer } from "@/lib/viewer-context";
+import { DEMO_PROJECT_ID } from "@/lib/demo";
 import { aiTaskFromIdea, createProject, detectAppType, instructionsFromIdea, isMealIdea, nameFromIdea, needsAI, suggestTarget, whatFromIdea } from "@/lib/model";
 
 /* Design A5 (and A6 in Developer view). Shows what the planner understood; nothing is built yet. */
@@ -50,9 +51,9 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 
 export function Refine({ idea }: { idea: string }) {
   const router = useRouter();
-  const { add } = useProjects();
   const credits = useCreditsUsed();
   const viewer = useViewer();
+  const { projects, add } = useProjects();
   const meal = isMealIdea(idea);
   const [name, setName] = useState(() => nameFromIdea(idea));
   const [what, setWhat] = useState(() => whatFromIdea(idea));
@@ -66,7 +67,10 @@ export function Refine({ idea }: { idea: string }) {
 
   const confirm = () => {
     setBusy(true);
-    const p = { ...createProject({ idea, name, what, target, instructions, appType, theme, withAI }), reviewOn: viewer.kind === "demo" };
+    const made = createProject({ idea, name, what, target, instructions, appType, theme, withAI });
+    // In the demo, the meal app is the one app every journey uses, so it gets a fixed id.
+    const demoApp = viewer.kind === "demo" && made.kind === "meal" && !projects.some((x) => x.id === DEMO_PROJECT_ID);
+    const p = { ...made, ...(demoApp ? { id: DEMO_PROJECT_ID } : {}), reviewOn: viewer.kind === "demo" };
     add(p);
     router.push(`/p/${p.id}/plan`);
   };
@@ -266,7 +270,7 @@ export function Refine({ idea }: { idea: string }) {
               <span className="text-[15px]">{themes[theme].name}</span>
             </div>
             <span className="text-[13px] text-ink-2">
-              {meal ? "Your users are households cooking together." : target ? `Your users: ${target.replace(/\.$/, "").toLowerCase()}.` : "Picked from what you described."}
+              {target ? `Your users: ${target.replace(/\.$/, "").toLowerCase()}.` : "Picked from what you described."}
             </span>
           </div>
 

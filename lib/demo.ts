@@ -2,6 +2,10 @@
 
 export const DEMO_PROJECT_ID = "abhi-kya-banega";
 
+/** The one app the demo tour builds, then uses for agents, GitHub and deploy. */
+export const DEMO_IDEA =
+  "An app for Indian homes with a cook. The family says what’s in the kitchen, in Hinglish or with a photo, and it suggests three meals we can make right now.";
+
 /** Workspaces in the demo (design A26). */
 export const demoWorkspaces = [
   {

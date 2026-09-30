@@ -53,6 +53,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
         )}
         <textarea
           aria-label="Describe your app"
+          data-tour="prompt"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {

@@ -10,11 +10,11 @@ export type AuthState = { error?: string; notice?: string } | undefined;
 
 const NOT_SET_UP = "Accounts aren’t switched on in this preview yet. Try the demo to look around.";
 
-/** "Try the demo": no sign-up, opens a ready project with the demo tour open. */
+/** "Try the demo": no sign-up, opens Home with the demo tour started. */
 export async function startDemo() {
   const store = await cookies();
   store.set(DEMO_COOKIE, "1", { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
-  redirect(`/p/${DEMO_PROJECT_ID}/app?tour=1`);
+  redirect("/home?tour=1");
 }
 
 export async function signOut() {
