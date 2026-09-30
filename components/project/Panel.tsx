@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "../Icon";
 import { useDismiss } from "../useDismiss";
-import { accept, buildNow, reject, send, suggest, type Mode } from "@/lib/chat";
+import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } from "@/lib/chat";
 import { lowerFirst, planTotals, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
 
@@ -21,6 +21,22 @@ type Need = {
 function useNeeds(project: Project, update: (fn: (p: Project) => Project) => void): Need[] {
   const needs: Need[] = [];
   const base = `/p/${project.id}`;
+  if (project.imported?.setup === "keys")
+    needs.push({ id: "keys", title: "Add passwords and keys", lines: ["2 keys are missing, so the app can’t fully start."], actions: [{ label: "Continue setup", primary: true, href: `${base}/setup` }] });
+  if (project.imported?.setup === "plan")
+    needs.push({
+      id: "confirm-import",
+      title: "Confirm the plan to start building",
+      lines: ["Until then, you can ask anything about your code."],
+      actions: [
+        { label: "Looks right", primary: true, onClick: () => update(confirmImport) },
+        { label: "Fix it", onClick: () => update((p) => ({ ...p, chat: [...p.chat, { id: Math.random().toString(36).slice(2), type: "ai", text: "Tell me what’s wrong, in your own words. I’ll correct the plan and show you the change first." }] })) },
+      ],
+    });
+  if (project.github?.clash)
+    needs.push({ id: "clash", title: "1 file needs your choice", lines: ["The other 2 changes from GitHub came in without problems."], actions: [{ label: "Choose", primary: true, href: `${base}/settings?tab=github` }] });
+  else if (project.github && project.github.behind > 0)
+    needs.push({ id: "behind", title: `${project.github.behind} new changes on GitHub`, lines: ["Rahul changed lib/parse-hinglish.ts and 2 other files."], actions: [{ label: "Get latest", primary: true, href: `${base}/settings?tab=github` }] });
   if (project.suggestion)
     needs.push({
       id: "suggestion",
@@ -40,7 +56,19 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
       actions: [{ label: "Keep building", primary: true, onClick: () => update((p) => startBuild(p)) }],
     });
   }
-  if (project.build.status === "done" && project.stage === "test") {
+  if (project.deploy?.status === "failed") {
+    const d = project.deploy;
+    needs.push({
+      id: "deploy-failed",
+      title: "Going live didn’t work",
+      lines: [`Version ${d.failedVersion} is missing its Live OpenAI key.${d.liveVersion ? ` Version ${d.liveVersion} is still live.` : " Nothing went live."}`],
+      actions: [
+        { label: d.liveKey ? "Try again" : "Add the Live key", primary: true, href: `${base}/deploy` },
+        { label: "See why", href: `${base}/deploy` },
+      ],
+    });
+  }
+  if (project.build.status === "done" && project.stage === "test" && !project.deploy?.liveVersion && project.deploy?.status !== "failed") {
     const t = planTotals(project.plan);
     needs.push({
       id: "built",
@@ -112,9 +140,12 @@ export function NeedsYou({ project, update }: { project: Project; update: (fn: (
 
 export function needsCount(project: Project) {
   let n = 0;
+  if (project.imported && project.imported.setup !== "done") n++;
+  if (project.github && (project.github.clash || project.github.behind > 0)) n++;
   if (project.suggestion) n++;
   if (project.build.status === "stopped") n++;
-  if (project.build.status === "done" && project.stage === "test") n++;
+  if (project.deploy?.status === "failed") n++;
+  if (project.build.status === "done" && project.stage === "test" && !project.deploy?.liveVersion && project.deploy?.status !== "failed") n++;
   return Math.min(n, 2);
 }
 
@@ -370,11 +401,12 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
 }
 
 export function Composer({ project, update }: { project: Project; update: (fn: (p: Project) => Project) => void }) {
-  const [mode, setMode] = useState<Mode>(project.stage === "plan" ? "Plan" : "Build");
+  const settingUp = !!project.imported && project.imported.setup !== "done";
+  const [mode, setMode] = useState<Mode>(settingUp ? "Ask" : project.stage === "plan" ? "Plan" : "Build");
   const [text, setText] = useState("");
   const [chips, setChips] = useState<string[]>([]);
   const building = project.build.status === "running";
-  const placeholder = building ? "Ask anything while it builds…" : "Ask for a change…";
+  const placeholder = settingUp ? "Ask about your code…" : building ? "Ask anything while it builds…" : "Ask for a change…";
 
   const submit = () => {
     const t = text.trim();
@@ -453,7 +485,7 @@ export function PanelBody({ project, update, now }: { project: Project; update: 
     <>
       <NeedsYou project={project} update={update} />
       <ChatMessages project={project} update={update} now={now} />
-      <Composer key={project.stage === "plan" ? "plan" : "later"} project={project} update={update} />
+      <Composer key={`${project.stage}-${project.imported?.setup ?? ""}`} project={project} update={update} />
     </>
   );
 }

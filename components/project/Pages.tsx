@@ -1,6 +1,12 @@
 "use client";
 
 import { AppView } from "../preview/AppView";
+import { DatabaseView } from "../data/DatabaseView";
+import { CodeView } from "../code/CodeView";
+import { ProjectSettings } from "../settings/ProjectSettings";
+import { SetupView } from "../import/SetupView";
+import { AgentsView } from "../agents/AgentsView";
+import { DeployView } from "../deploy/DeployView";
 import { PlanView } from "../plan/PlanView";
 import { TestsView } from "../tests/TestsView";
 import { VersionsView } from "../versions/VersionsView";
@@ -24,4 +30,34 @@ export function TestsPage() {
 export function VersionsPage({ selected }: { selected?: number }) {
   const { project, update, now } = useCurrentProject();
   return <VersionsView key={selected ?? "latest"} project={project} update={update} now={now} selected={selected} />;
+}
+
+export function DeployPage() {
+  const { project, update, now } = useCurrentProject();
+  return <DeployView project={project} update={update} now={now} />;
+}
+
+export function AgentsPage() {
+  const { project, update } = useCurrentProject();
+  return <AgentsView project={project} update={update} />;
+}
+
+export function SetupPage() {
+  const { project, update } = useCurrentProject();
+  return <SetupView project={project} update={update} />;
+}
+
+export function SettingsPage() {
+  const { project, update } = useCurrentProject();
+  return <ProjectSettings project={project} update={update} />;
+}
+
+export function DatabasePage() {
+  const { project, update } = useCurrentProject();
+  return <DatabaseView project={project} update={update} />;
+}
+
+export function CodePage({ file }: { file?: string }) {
+  const { project } = useCurrentProject();
+  return <CodeView key={file ?? ""} project={project} file={file} />;
 }

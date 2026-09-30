@@ -21,13 +21,13 @@ function CurrentPill({ label }: { label: string }) {
   );
 }
 
-export function JourneyBar({ projectId, current }: { projectId: string; current: Stage }) {
-  const at = stages.findIndex((s) => s.key === current);
+export function JourneyBar({ projectId, current, live = false }: { projectId: string; current: Stage; live?: boolean }) {
+  const at = current === "live" ? stages.length : stages.findIndex((s) => s.key === current);
   return (
     <ol aria-label="Project journey" className="flex items-center gap-2.5 text-[13px]">
       {stages.map((s, i) => {
         const href = `/p/${projectId}/${s.path}`;
-        const state = i < at ? "done" : i === at ? "current" : "todo";
+        const state = i < at || (live && s.key === "live") ? "done" : i === at ? "current" : "todo";
         return (
           <li key={s.key} className="contents">
             {i > 0 && <span aria-hidden="true" className="h-px w-7 bg-line-strong" />}
@@ -59,7 +59,14 @@ export function CurrentStage({ projectId, current }: { projectId: string; curren
   const s = stages.find((x) => x.key === current)!;
   return (
     <Link href={`/p/${projectId}/${s.path}`} aria-label={`Now: ${s.label}`} className="text-[13px]">
-      <CurrentPill label={s.label} />
+      {current === "live" ? (
+        <span className="flex items-center gap-1.5 rounded-full bg-good-soft px-3 py-1.5 font-medium text-good">
+          <Icon name="check" size={14} strokeWidth={2.4} />
+          Live
+        </span>
+      ) : (
+        <CurrentPill label={s.label} />
+      )}
     </Link>
   );
 }

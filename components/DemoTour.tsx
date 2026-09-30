@@ -13,9 +13,9 @@ import { DEMO_PROJECT_ID } from "@/lib/demo";
 const p = `/p/${DEMO_PROJECT_ID}`;
 const journeys = [
   { key: "prompt", title: "Build from a prompt", detail: "Describe an app, refine it, read the plan, watch it build", href: "/home" },
-  { key: "import", title: "Import a project", detail: "Bring in a GitHub repo and see what Architect makes of it", href: "/home" },
-  { key: "agents", title: "Agents", detail: "The app’s AI in plain words, and a 9 PM automation", href: `${p}/agents` },
-  { key: "github", title: "GitHub", detail: "Connect, get the latest changes, sort out a clash", href: `${p}/settings` },
+  { key: "import", title: "Import a project", detail: "Bring in a GitHub repo and see what Architect makes of it", href: "/home?import=1" },
+  { key: "agents", title: "Agents", detail: "The app’s AI in plain words, and a 9 PM automation that needs a fix", href: `${p}/agents` },
+  { key: "github", title: "GitHub", detail: "Connect, get the latest changes, sort out a clash", href: `${p}/settings?tab=github` },
   { key: "deploy", title: "Deploy", detail: "Go live, and see what happens when a check fails", href: `${p}/deploy` },
 ];
 

@@ -16,6 +16,7 @@ type Ctx = {
   now: number;
   update: (id: string, fn: (p: Project) => Project) => void;
   add: (p: Project) => void;
+  remove: (id: string) => void;
 };
 
 const ProjectsContext = createContext<Ctx | null>(null);
@@ -107,7 +108,7 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
       setProjects((list) => {
         let changed = false;
         const next = list.map((p) => {
-          if (p.build.status !== "running" && p.build.status !== "checking") return p;
+          if (p.build.status !== "running" && p.build.status !== "checking" && p.deploy?.status !== "deploying") return p;
           const q = advance(p, t);
           if (q !== p) {
             changed = true;
@@ -134,7 +135,16 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
     writeLocal(kind, [p, ...list.filter((x) => x.id !== p.id)]);
   }, [kind]);
 
-  const value = useMemo(() => ({ loaded, projects, now, update, add }), [loaded, projects, now, update, add]);
+  const remove = useCallback(
+    (id: string) => {
+      setProjects((list) => list.filter((p) => p.id !== id));
+      const supabase = kind === "account" ? getBrowserSupabase() : null;
+      supabase?.from("projects").delete().eq("id", id).then(() => {});
+    },
+    [kind],
+  );
+
+  const value = useMemo(() => ({ loaded, projects, now, update, add, remove }), [loaded, projects, now, update, add, remove]);
   return <ProjectsContext.Provider value={value}>{children}</ProjectsContext.Provider>;
 }
 

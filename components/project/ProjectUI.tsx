@@ -8,9 +8,11 @@ export type ProjectUI = {
   openPanel: () => void;
   highlightNeeds: boolean;
   pointAtNeeds: () => void;
+  /** Some tabs (Agents) need the room: the panel shrinks to a thin "Chat" strip. */
+  collapsePanel: (on: boolean) => void;
 };
 
-export const ProjectUIContext = createContext<ProjectUI>({ openPanel: () => {}, highlightNeeds: false, pointAtNeeds: () => {} });
+export const ProjectUIContext = createContext<ProjectUI>({ openPanel: () => {}, highlightNeeds: false, pointAtNeeds: () => {}, collapsePanel: () => {} });
 
 export function useProjectUI() {
   return useContext(ProjectUIContext);

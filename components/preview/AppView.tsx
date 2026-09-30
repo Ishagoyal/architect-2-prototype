@@ -37,8 +37,8 @@ function progress(p: Project, now: number) {
   const doneKind = (k: Step["kind"]) => p.plan.steps.some((s, i) => s.kind === k && i < p.stepsDone);
   const aiIndex = p.plan.steps.findIndex((s) => s.kind === "ai");
   const itemsVisible =
-    aiIndex >= 0 ? p.stepsDone > aiIndex || (cur?.kind === "ai" && frac > 0.3) : p.stepsDone >= 1;
-  const buttonVisible = doneKind("screens") || (cur?.kind === "screens" && frac > 0.5);
+    !!p.imported || (aiIndex >= 0 ? p.stepsDone > aiIndex || (cur?.kind === "ai" && frac > 0.3) : p.stepsDone >= 1);
+  const buttonVisible = !!p.imported || doneKind("screens") || (cur?.kind === "screens" && frac > 0.5);
   return { running, cur, frac, itemsVisible, buttonVisible };
 }
 
@@ -336,7 +336,7 @@ export function AppView({ project: p, update, now }: { project: Project; update:
   const t = planTotals(p.plan);
   const dark = look === "dark" || (look === "auto" && resolvedTheme === "dark");
 
-  if (p.stage === "plan" && p.build.status === "idle") {
+  if (p.stage === "plan" && p.build.status === "idle" && !p.imported) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
         <span className="flex size-12 items-center justify-center rounded-2xl bg-sunken text-ink-2">
@@ -384,7 +384,9 @@ export function AppView({ project: p, update, now }: { project: Project; update:
           ) : (
             <>
               <strong className="font-semibold">
-                {p.build.status === "running"
+                {p.imported && p.build.status === "idle"
+                  ? "Your imported app, running in its own sandbox"
+                  : p.build.status === "running"
                   ? `Building step ${p.build.step + 1} of ${total}: ${lowerFirst(p.plan.steps[p.build.step].title)}`
                   : p.build.status === "stopped"
                     ? `Stopped at step ${p.build.step + 1} of ${total}`
@@ -398,7 +400,11 @@ export function AppView({ project: p, update, now }: { project: Project; update:
                 ))}
               </span>
               <span className="text-ink-2 max-sm:text-xs" title="Credits this build has used so far">
-                {p.build.status === "done" ? `Every check passed · used ${p.creditsUsed}% of this month’s credits` : `Used ${p.creditsUsed}% of this month’s credits so far`}
+                {p.imported && p.build.status === "idle"
+                  ? "6 of 8 things work today · see the plan"
+                  : p.build.status === "done"
+                    ? `Every check passed · used ${p.creditsUsed}% of this month’s credits`
+                    : `Used ${p.creditsUsed}% of this month’s credits so far`}
               </span>
             </>
           )}

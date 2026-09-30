@@ -9,6 +9,7 @@ import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useDismiss } from "../useDismiss";
 import { useProjectUI } from "../project/ProjectUI";
 import { planMarkdown, planTotals, range, startBuild, uid, type Plan, type Project, type Step } from "@/lib/model";
+import { confirmImport } from "@/lib/chat";
 
 /* Designs A7–A8: the plan. Summary and Full plan are one switch; the plan is the final word. */
 
@@ -156,12 +157,13 @@ function Summary({ project, onStep, onFull }: { project: Project; onStep: (i: nu
 /* ---------- Full plan ---------- */
 
 const sections = ["What it does", "Who uses it", "What people can do", "Screens", "The app’s AI", "What it saves", "Keys it needs", "Build steps and checks", "Not in this version", "Open questions"];
+const importedSections = ["What it does", "Who uses it", "What people can do", "Screens we found", "The app’s AI", "What it saves", "Keys it needs", "What works today", "Notes for AI tools", "Open questions"];
 
 function Section({ n, title, children, changed }: { n: number; title: string; children: React.ReactNode; changed?: boolean }) {
   return (
-    <section id={`s${n}`} className="flex scroll-mt-4 flex-col gap-3 border-t border-line pt-6">
+    <section id={`s${String(n).replace(".", "-")}`} className="flex scroll-mt-4 flex-col gap-3 border-t border-line pt-6">
       <h2 className="flex items-baseline gap-2 text-xl font-semibold">
-        <span className="text-xs font-normal text-ink-2">{n}</span>
+        <span className="text-xs font-normal text-ink-2">{Number.isInteger(n) ? n : ""}</span>
         {title}
         {changed && <span className="size-2 rounded-full bg-good" aria-label="has a suggested change" />}
       </h2>
@@ -237,11 +239,11 @@ function FullPlan({
       <nav aria-label="On this page" className="hidden lg:block">
         <div className="sticky top-4 flex flex-col gap-0.5">
           <span className="px-2 pb-2 text-[11px] font-semibold tracking-[0.08em] text-ink-2 uppercase">On this page</span>
-          {sections.map((title, i) => (
+          {(plan.found ? importedSections : sections).map((title, i) => (
             <a key={title} href={`#s${i + 1}`} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-hover">
               <span className="w-4 text-xs text-ink-2">{i + 1}</span>
               <span className="flex-1">{title}</span>
-              {s && [2, 5, 7, 8].includes(i) && <span className="size-1.5 rounded-full bg-good" />}
+              {(s ? [2, 5, 7, 8] : plan.found ? [4, 7, 9] : []).includes(i) && <span className="size-1.5 rounded-full bg-good" />}
             </a>
           ))}
         </div>
@@ -249,7 +251,9 @@ function FullPlan({
 
       <article className="flex min-w-0 flex-col gap-6">
         <header className="flex flex-col gap-1">
-          <span className="text-xs text-ink-2">Plan · version {project.planVersion} · {project.planVersion > 1 ? "saved by you" : "written from your prompt and Refine"}</span>
+          <span className="text-xs text-ink-2">
+            Plan · {plan.found ? <>written from your code in <span className="font-mono">{plan.found.repo}</span></> : <>version {project.planVersion} · {project.planVersion > 1 ? "saved by you" : "written from your prompt and Refine"}</>}
+          </span>
           <h1 className="font-serif text-[38px] leading-tight">{project.name}</h1>
           <span className="text-[15px] text-ink-2">{plan.tagline}</span>
         </header>
@@ -269,6 +273,16 @@ function FullPlan({
           <p className="text-[15px] leading-relaxed">
             <strong className="font-semibold">Why:</strong> {plan.why}
           </p>
+          {plan.found && (
+            <div className="flex flex-wrap gap-1.5">
+              {plan.found.stack.map((t) => (
+                <span key={t} className="rounded-full border border-line-strong px-2.5 py-0.5 text-xs">
+                  {t}
+                </span>
+              ))}
+              <span className="rounded-full bg-good-soft px-2.5 py-0.5 text-xs text-good">Your code stays as it is</span>
+            </div>
+          )}
         </Section>
 
         <Section n={2} title="Who uses it">
@@ -292,17 +306,17 @@ function FullPlan({
           )}
         </Section>
 
-        <Section n={4} title="Screens">
+        <Section n={4} title={plan.found ? "Screens we found" : "Screens"}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {plan.screens.map((sc) => (
               <div key={sc.title} className="flex flex-col gap-1">
                 <span className="flex h-24 items-start rounded-lg border border-[#F0DDD0] bg-[#FFF6EA] p-2 font-serif text-[15px] text-[#7A3A12]">{sc.label}</span>
                 <span className="text-[13px] font-semibold">{sc.title}</span>
-                <span className="text-xs text-ink-2">{sc.sub}</span>
+                <span className={`text-xs text-ink-2 ${plan.found ? "font-mono" : ""}`}>{sc.sub}</span>
               </div>
             ))}
           </div>
-          <span className="text-xs text-ink-2">Mockups only. {project.stepsDone ? "The real app is in the App tab." : "Nothing is built yet."}</span>
+          <span className="text-xs text-ink-2">{plan.found ? "Found in your code. The real app is in the App tab." : `Mockups only. ${project.stepsDone ? "The real app is in the App tab." : "Nothing is built yet."}`}</span>
         </Section>
 
         <Section n={5} title="The app’s AI">
@@ -335,7 +349,23 @@ function FullPlan({
           <Table head={["Key", "Why", "Status"]} rows={plan.keys.map(([a, b, c]) => [a, b, <span key="c" className="text-good">{c}</span>])} />
         </Section>
 
-        <Section n={8} title="Build steps and checks" changed={!!s}>
+        {plan.found && (
+          <Section n={8} title="What works today">
+            <p className="text-[15px] text-ink-2">
+              I ran your app’s main actions once. {plan.found.works.filter((w) => w[1]).length} of {plan.found.works.length} work.
+            </p>
+            <ul className="flex flex-col">
+              {plan.found.works.map(([w, ok, why]) => (
+                <li key={w} className="flex items-center gap-2.5 border-t border-line py-2 text-sm">
+                  <span className={ok ? "text-good" : "text-bad"}>{ok ? "✓" : "✗"}</span>
+                  {w}
+                  {why && <span className="text-ink-2">· {why}</span>}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+        <Section n={plan.found ? 8.5 : 8} title={plan.found ? "Steps to fix what doesn’t work" : "Build steps and checks"} changed={!!s}>
           <p className="text-[15px] leading-relaxed text-ink-2">
             Each step is built, then its checks run. “Usually uses” is a share of this month’s credits, based on similar steps in past builds. It can be more if
             fixes are needed.
@@ -381,6 +411,11 @@ function FullPlan({
           </p>
         </Section>
 
+        {plan.found ? (
+          <Section n={9} title="Notes for AI tools">
+            <p className="text-[15px]">{plan.found.notes}</p>
+          </Section>
+        ) : (
         <Section n={9} title="Not in this version">
           {editing ? (
             <ListEdit label="Not in this version, one per line" value={draft.notIn} onChange={(notIn) => setDraft({ ...draft, notIn })} />
@@ -392,6 +427,7 @@ function FullPlan({
             </ul>
           )}
         </Section>
+        )}
 
         <Section n={10} title="Open questions">
           <div className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-4">
@@ -413,7 +449,7 @@ function FullPlan({
           </div>
         </Section>
 
-        {project.stage === "plan" && !editing && <ReadyCard project={project} update={update} t={t} />}
+        {project.stage === "plan" && !editing && (project.imported?.setup === "plan" ? <LooksRight update={update} /> : <ReadyCard project={project} update={update} t={t} />)}
       </article>
     </div>
   );
@@ -642,6 +678,30 @@ function ReadyCard({ project, update, t }: { project: Project; update: Update; t
   );
 }
 
+function LooksRight({ update }: { update: Update }) {
+  const { openPanel } = useProjectUI();
+  return (
+    <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-line bg-panel p-5 sm:flex-row sm:items-center">
+      <span className="flex flex-col gap-1">
+        <strong className="text-[15px] font-semibold">Does this look right?</strong>
+        <span className="text-[13px] text-ink-2">Every build and check will use this plan.</span>
+      </span>
+      <span className="flex gap-2">
+        <button type="button" onClick={() => { fixByChat(update); openPanel(); }} className={btnOutline}>
+          Fix it by chat
+        </button>
+        <button type="button" onClick={() => update(confirmImport)} className={btnPrimary}>
+          Looks right
+        </button>
+      </span>
+    </div>
+  );
+}
+
+function fixByChat(update: Update) {
+  update((p) => ({ ...p, chat: [...p.chat, { id: uid(), type: "ai", text: "Tell me what’s wrong, in your own words. I’ll correct the plan and show you the change first." }] }));
+}
+
 /* ---------- The page ---------- */
 
 function diffPlan(before: Plan, after: Plan) {
@@ -676,7 +736,9 @@ function diffPlan(before: Plan, after: Plan) {
 }
 
 export function PlanView({ project, update }: { project: Project; update: Update }) {
-  const [view, setView] = useState<"summary" | "full">("summary");
+  const reviewingImport = project.imported?.setup === "plan";
+  const [view, setView] = useState<"summary" | "full">(project.imported && project.imported.setup !== "done" ? "full" : "summary");
+  const { openPanel } = useProjectUI();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Plan>(project.plan);
   const [saved, setSaved] = useState<string | null>(null);
@@ -706,7 +768,23 @@ export function PlanView({ project, update }: { project: Project; update: Update
   return (
     <div className="relative flex min-h-full flex-col">
       <div className="sticky top-0 z-20 flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 md:px-5">
-        {editing ? (
+        {reviewingImport && !editing ? (
+          <>
+            <strong className="text-[13px] font-semibold">Here’s what we think your app does</strong>
+            <span className="flex gap-2">
+              <button type="button" onClick={startEdit} className={`${btnOutline} gap-1.5`}>
+                <Icon name="pencil" size={14} />
+                Edit
+              </button>
+              <button type="button" onClick={() => { fixByChat(update); openPanel(); }} className={btnOutline}>
+                Fix it by chat
+              </button>
+              <button type="button" onClick={() => update(confirmImport)} className={btnPrimary}>
+                Looks right
+              </button>
+            </span>
+          </>
+        ) : editing ? (
           <>
             <span className="flex items-center gap-3 text-[13px]">
               <span className="size-2 rounded-full bg-dev" />
