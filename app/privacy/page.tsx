@@ -19,7 +19,7 @@ export default function Privacy() {
           Supabase.
         </li>
         <li>
-          <strong className="font-semibold">Google or GitHub sign-in:</strong> we get your name and email from them.
+          <strong className="font-semibold">Google or GitHub sign-in:</strong> we get your name, email and profile picture from them.
         </li>
         <li>
           <strong className="font-semibold">The demo:</strong> everything stays in your browser. Leaving the demo deletes it.
