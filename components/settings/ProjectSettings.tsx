@@ -6,6 +6,8 @@ import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useProjects } from "@/lib/projects";
 import { useViewer } from "@/lib/viewer-context";
 import { uid, type Project } from "@/lib/model";
+import { InviteModal, useWorkspaceList } from "../workspaces";
+import { Icon } from "../Icon";
 
 /* Designs D1–D5, C6, S6: project settings. */
 
@@ -261,6 +263,9 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
 function TeamTab({ project: p, update }: { project: Project; update: Update }) {
   const viewer = useViewer();
   const on = !!p.reviewOn;
+  const { current } = useWorkspaceList();
+  const [inviting, setInviting] = useState(false);
+  const invited = current.people.filter((x) => x.invited);
   return (
     <div className="flex flex-col gap-4">
       <div className={card}>
@@ -282,7 +287,7 @@ function TeamTab({ project: p, update }: { project: Project; update: Update }) {
       <div className={card}>
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold">People on this project</span>
-          <button type="button" className={btnOutline}>Invite by email</button>
+          <button type="button" onClick={() => setInviting(true)} className={btnOutline}>Invite by email</button>
         </div>
         {[
           [viewer.initials, `${viewer.name} (you)`, "Owner", "Can approve"],
@@ -300,6 +305,21 @@ function TeamTab({ project: p, update }: { project: Project; update: Update }) {
             <span className="rounded-full bg-sunken px-2.5 py-1 text-xs">{r}</span>
           </div>
         ))}
+        {invited.map((x) => (
+          <div key={x.name} className="flex items-center justify-between gap-3 border-t border-line pt-3">
+            <span className="flex items-center gap-3">
+              <span className="flex size-8 items-center justify-center rounded-full border border-dashed border-line-strong text-ink-2">
+                <Icon name="people" size={13} />
+              </span>
+              <span className="flex flex-col">
+                <span className="text-sm">{x.name}</span>
+                <span className="text-xs text-ink-2">{x.detail}</span>
+              </span>
+            </span>
+            <span className="rounded-full bg-sunken px-2.5 py-1 text-xs">{x.role === "Admin" ? "Can approve" : "Can edit"}</span>
+          </div>
+        ))}
+        <InviteModal open={inviting} onClose={() => setInviting(false)} workspace={current} />
         <div className="flex items-center justify-between border-t border-line pt-3 text-xs text-ink-2">
           Choosing who can approve is part of the Team plan.
           <span className="rounded-full bg-accent-soft px-2 py-0.5 text-accent-strong">Team plan</span>

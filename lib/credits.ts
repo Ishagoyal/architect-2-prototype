@@ -8,5 +8,6 @@ export function useCreditsUsed() {
   const viewer = useViewer();
   const { projects } = useProjects();
   const base = viewer.kind === "demo" ? 71 : 0;
-  return Math.min(99, base + Math.round(projects.reduce((s, p) => s + p.creditsUsed, 0) / 2));
+  // The total is the sum of the projects, so it matches Usage → By project.
+  return Math.min(99, base + Math.round(projects.reduce((s, p) => s + p.creditsUsed, 0)));
 }

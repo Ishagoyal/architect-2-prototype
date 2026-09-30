@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "../Icon";
-import { planMarkdown, type Project } from "@/lib/model";
+import { planMarkdown, uid, type Project } from "@/lib/model";
+import { useAddOn } from "@/lib/addon";
 
-/* Designs A16 / A17: read-only by default; editable with a terminal in Developer view. */
+/* Designs A16 / A17: anyone can read the code. Editing it and the terminal come with the
+   Developer add-on (PRODUCT.md: "Free users see, paid users do"). */
 
 function filesFor(p: Project): Record<string, string> {
   const agent = p.kind === "meal" ? "meal-planner" : "assistant";
@@ -25,10 +27,13 @@ function filesFor(p: Project): Record<string, string> {
           : `// ${s.title}: ${s.builds}\n// Written in step ${p.plan.steps.indexOf(s) + 1} of the plan.\n\nexport {}\n`;
     }),
   );
-  return files;
+  return { ...files, ...p.codeEdits };
 }
 
-export function CodeView({ project: p, file }: { project: Project; file?: string }) {
+const system = (name: string) => name === "plan.md" || name === "package.json";
+
+export function CodeView({ project: p, file, update }: { project: Project; file?: string; update?: (fn: (p: Project) => Project) => void }) {
+  const { addOn } = useAddOn();
   const files = filesFor(p);
   const names = Object.keys(files).sort();
   const [open, setOpen] = useState(file && files[file] ? file : names.find((n) => n.startsWith("lib/")) ?? "plan.md");
@@ -36,6 +41,19 @@ export function CodeView({ project: p, file }: { project: Project; file?: string
   const [term, setTerm] = useState<string[]>(["$ "]);
   const locked = p.build.status === "running";
   const lines = (files[open] ?? "").split("\n");
+  const [draft, setDraft] = useState<string | null>(null);
+  const editable = addOn && !locked && !system(open) && !!update;
+  const text = draft ?? files[open] ?? "";
+  const save = () => {
+    if (draft === null || !update) return;
+    const name = open;
+    update((q) => ({
+      ...q,
+      codeEdits: { ...q.codeEdits, [name]: draft },
+      chat: [...q.chat, { id: uid(), type: "ai", text: `Saved your change to ${name}. The next build and checks use it.` }],
+    }));
+    setDraft(null);
+  };
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -43,8 +61,16 @@ export function CodeView({ project: p, file }: { project: Project; file?: string
         <span className="flex items-center gap-3">
           <strong className="font-semibold">Code</strong>
           <span className="text-ink-2">
-            <span className="dev:hidden">Read-only · turn on Developer view to edit</span>
-            <span className="hidden dev:inline">{locked ? "Read-only while a step runs · editing unlocks after it" : `${names.length} files`}</span>
+            {!addOn ? (
+              <>
+                {names.length} files · read-only.{" "}
+                <Link href="/settings" className="text-accent">Editing and the terminal come with the Developer add-on</Link>
+              </>
+            ) : locked ? (
+              "Read-only while a step runs · editing unlocks after it"
+            ) : (
+              `${names.length} files · click a file to edit it`
+            )}
           </span>
         </span>
         {p.github && p.github.behind > 0 && (
@@ -58,7 +84,10 @@ export function CodeView({ project: p, file }: { project: Project; file?: string
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search files" className="mb-2 h-9 rounded-[10px] border border-line-strong bg-raised px-3 text-[13px] placeholder:text-ink-3" />
           <div className="flex max-h-40 flex-col overflow-y-auto md:max-h-none">
             {names.filter((n) => n.includes(q)).map((n) => (
-              <button key={n} type="button" onClick={() => setOpen(n)} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left font-mono text-[12.5px] ${open === n ? "bg-sunken" : "hover:bg-hover"}`}>
+              <button key={n} type="button" onClick={() => {
+                  setOpen(n);
+                  setDraft(null);
+                }} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left font-mono text-[12.5px] ${open === n ? "bg-sunken" : "hover:bg-hover"}`}>
                 <Icon name="plan" size={12} />
                 <span className="truncate">{n}</span>
               </button>
@@ -69,8 +98,28 @@ export function CodeView({ project: p, file }: { project: Project; file?: string
           </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="border-b border-line px-4 py-2 font-mono text-xs text-ink-2">{open}</div>
-          <pre className="flex-1 overflow-auto py-3 font-mono text-[13px] leading-6" contentEditable={false}>
+          <div className="flex min-h-10 items-center justify-between gap-3 border-b border-line px-4 py-1.5 font-mono text-xs text-ink-2">
+            <span>
+              {open}
+              {addOn && system(open) && " · read-only (system file)"}
+            </span>
+            {draft !== null && (
+              <span className="flex gap-2 font-sans">
+                <button type="button" onClick={() => setDraft(null)} className="h-8 rounded-lg px-2.5 text-[13px] text-ink-2 hover:bg-hover">Undo</button>
+                <button type="button" onClick={save} className="h-8 rounded-lg bg-primary px-3 text-[13px] font-medium text-on-primary">Save</button>
+              </span>
+            )}
+          </div>
+          {editable ? (
+            <textarea
+              aria-label={`Edit ${open}`}
+              value={text}
+              spellCheck={false}
+              onChange={(e) => setDraft(e.target.value)}
+              className="min-h-[360px] flex-1 resize-none bg-transparent px-4 py-3 font-mono text-[13px] leading-6 outline-none"
+            />
+          ) : (
+          <pre className="flex-1 overflow-auto py-3 font-mono text-[13px] leading-6">
             {lines.map((l, i) => (
               <div key={i} className="flex gap-4 px-4">
                 <span className="w-6 shrink-0 text-right text-ink-3 select-none">{i + 1}</span>
@@ -78,7 +127,8 @@ export function CodeView({ project: p, file }: { project: Project; file?: string
               </div>
             ))}
           </pre>
-          <div className="hidden flex-col border-t border-line bg-sunken dev:flex">
+          )}
+          <div className={`${addOn ? "flex" : "hidden"} flex-col border-t border-line bg-sunken`}>
             <div className="flex items-center justify-between px-4 py-2 text-xs">
               <span className="flex gap-4">
                 <strong className="font-semibold">Terminal</strong>
