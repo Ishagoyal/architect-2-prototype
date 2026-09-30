@@ -149,9 +149,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
         </p>
       )}
 
-      <div className="mt-8 flex items-center justify-between text-[13px]">
-        <span className="text-ink-2">{heading}</span>
-      </div>
+      <div className="mt-8 text-[13px] text-ink-2">{heading}</div>
       <div className="mt-3 flex flex-col items-start gap-2">
         {ideas.map((idea) => (
           <button
