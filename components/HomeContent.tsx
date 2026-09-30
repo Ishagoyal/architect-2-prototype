@@ -16,7 +16,7 @@ export function HomeContent({ firstName, heading, ideas, initial }: { firstName:
 
   return (
     <div className={`mx-auto flex w-full max-w-[760px] flex-col px-4 pt-10 pb-24 md:px-6 md:pb-10 ${returning ? "md:pt-11" : "md:pt-[160px]"}`}>
-      <h1 className={`text-center font-serif text-[40px] leading-[1.05] ${returning ? "md:text-[56px]" : "md:text-[64px]"}`}>
+      <h1 className={`text-center font-serif text-[34px] leading-[1.1] ${returning ? "md:text-[44px]" : "md:text-[52px]"}`}>
         {returning ? (demo ? "What are we building next?" : `Welcome back, ${firstName}. What are we building next?`) : "What should it do?"}
       </h1>
       <p className="mt-3 text-center text-[15px] text-ink-2 md:mt-4 md:text-lg">

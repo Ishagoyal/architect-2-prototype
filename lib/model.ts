@@ -126,6 +126,10 @@ export type Project = {
   stepByStep?: boolean;
   /** Saved changes to an agent (design C1), by agent key. */
   agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
+  /** Code changed by hand in the Code tab (Developer add-on), by file. */
+  codeEdits?: Record<string, string>;
+  /** Two-way sync with your own GitHub repo (Developer add-on). Both on unless turned off. */
+  sync?: { prs: boolean; pull: boolean };
   /** GitHub (designs D1–D5). */
   github?: { repo: string; own: boolean; behind: number; clash: boolean };
   /** The AI wants to change a check's wording; it waits for the person (design A21). */

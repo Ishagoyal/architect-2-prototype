@@ -14,6 +14,7 @@ import { DemoTourCard, DemoTourIcon, DemoTourButton } from "../DemoTour";
 import { JourneyBar, CurrentStage } from "./JourneyBar";
 import { PanelBody, needsCount } from "./Panel";
 import { ProjectUIContext } from "./ProjectUI";
+import { ShareMenu } from "./ShareMenu";
 import { useProject } from "@/lib/projects";
 import { useViewer } from "@/lib/viewer-context";
 import { DEMO_PROJECT_ID } from "@/lib/demo";
@@ -203,9 +204,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
             >
               Review: <strong className="font-semibold">{project.reviewOn ? "on" : "off"}</strong>
             </Link>
-            <button type="button" aria-label="Share" className="hidden size-9 items-center justify-center rounded-[10px] border border-line-strong bg-panel md:flex">
-              <Icon name="share" size={16} />
-            </button>
+            <ShareMenu project={project} />
             <ChatButton count={count} onClick={openPanel} className="hidden md:flex lg:hidden" />
             <Link
               href={`${base}/deploy`}

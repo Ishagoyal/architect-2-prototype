@@ -11,7 +11,10 @@ import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { usePrefs, type ThemeChoice } from "@/lib/prefs";
 import { useViewer } from "@/lib/viewer-context";
-import { AddOnTip } from "../AddOnTip";
+import { AddOnTip, ProjectLimitInput } from "../AddOnTip";
+import { useAddOn } from "@/lib/addon";
+import { UnlockButton, addOnFeatures } from "../UpgradeModal";
+import { useWorkspaceList } from "../workspaces";
 
 const page = "mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-4 pt-8 pb-24 md:px-8 md:pt-10 md:pb-10";
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
@@ -33,7 +36,7 @@ export function ProjectsPage() {
         <h1 className="font-serif text-[44px] leading-none">Projects</h1>
         <span className="flex gap-2">
           <button type="button" onClick={() => setImporting(true)} className={btnOutline}>Import from GitHub</button>
-          <Link href="/home" className={btnPrimary}>New project</Link>
+          <Link href="/home?new=1" className={btnPrimary}>New project</Link>
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -66,11 +69,19 @@ export function ProjectsPage() {
 /* A28 */
 export function AgentsHomePage() {
   const { projects } = useProjects();
-  const agents = projects.filter((p) => p.plan.ai).map((p) => ({ p, name: p.imported ? "Meal suggester" : p.plan.ai!.name, framework: p.imported ? "LangGraph" : "Lyzr" }));
+  const automations = projects.filter((p) => p.kind === "meal" && !p.imported);
+  const agents = projects.filter((p) => p.plan.ai).map((p) => ({ p, name: p.plan.ai!.name, framework: p.imported ? "LangGraph" : "Lyzr" }));
   return (
     <div className={page}>
       <h1 className="font-serif text-[44px] leading-none">Agents</h1>
       <p className="-mt-3 text-[15px] text-ink-2">Every agent in this workspace, and what runs on its own.</p>
+      {agents.length === 0 ? (
+        <div className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-panel p-6">
+          <span className="text-[15px] font-semibold">No agents yet</span>
+          <p className="text-sm text-ink-2">Agents are the AI inside your apps, like one that answers questions or sorts messages. Build an app that uses AI, and its agent shows up here.</p>
+          <Link href="/home?new=1" className={btnPrimary}>Describe an app</Link>
+        </div>
+      ) : (
       <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead>
@@ -95,9 +106,11 @@ export function AgentsHomePage() {
           </tbody>
         </table>
       </div>
+      )}
       <h2 className="text-lg font-semibold">Automations</h2>
       <div className="flex flex-col gap-2">
-        {projects.filter((p) => p.kind === "meal" && !p.imported).map((p) => (
+        {automations.length === 0 && <p className="text-sm text-ink-2">Nothing runs on its own yet. Automations, like a daily summary at 9 AM, show up here once an app has one.</p>}
+        {automations.map((p) => (
           <Link key={p.id} href={`/p/${p.id}/agents`} className="flex items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3">
             <span className="flex flex-col">
               <span className="text-sm font-medium">Every day 9 PM · {p.name}</span>
@@ -136,6 +149,7 @@ export function UsagePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className={card}>
           <span className="text-lg font-semibold">By project</span>
+          {projects.length === 0 && <p className="text-sm text-ink-2">No projects yet.</p>}
           {projects.map((p) => (
             <div key={p.id} className="grid grid-cols-[1fr_1.4fr_auto] items-center gap-3 text-sm">
               <span className="truncate">{p.name}</span>
@@ -146,15 +160,20 @@ export function UsagePage() {
         </div>
         <div className={card}>
           <span className="text-lg font-semibold">Building vs your live apps</span>
-          <div className="flex h-2 overflow-hidden rounded-full"><span className="bg-accent" style={{ width: "66%" }} /><span className="bg-info" style={{ width: "34%" }} /></div>
+          {viewer.kind !== "demo" ? (
+            <p className="text-sm text-ink-2">Nothing to show yet. Once an app is live, this splits your credits between building and people using your apps.</p>
+          ) : (
+            <div className="flex h-2 overflow-hidden rounded-full"><span className="bg-accent" style={{ width: "66%" }} /><span className="bg-info" style={{ width: "34%" }} /></div>
+          )}
           <div className="flex justify-between text-[13px]">
             <span><strong className="font-semibold">Building</strong><span className="block text-xs text-ink-2">you, making changes</span></span>
             <span className="text-right"><strong className="font-semibold">Live apps</strong><span className="block text-xs text-ink-2">people using them + scheduled runs</span></span>
           </div>
         </div>
         <div className={card}>
-          <span className="flex justify-between text-lg font-semibold">Where your credits went <span className="text-xs font-normal text-ink-2">example</span></span>
-          {[
+          <span className="flex justify-between text-lg font-semibold">Where your credits went {viewer.kind === "demo" && <span className="text-xs font-normal text-ink-2">example</span>}</span>
+          {viewer.kind !== "demo" && <p className="text-sm text-ink-2">Nothing to show yet. After a few builds, this shows what used the most credits, with a tip for each.</p>}
+          {viewer.kind === "demo" && [
             ["3 fix attempts in step 3 of Abhi Kya Banega", "Tip: describe the expected result more clearly", "12%"],
             ["Scheduled runs at 9 PM and 3 PM", "Tip: pause them when you’re not using the app", "15% a month"],
             ["Long chats in one project", "Tip: start a new chat for an unrelated change", "9%"],
@@ -169,10 +188,11 @@ export function UsagePage() {
           <span className="text-lg font-semibold">Limits</span>
           <div className="flex justify-between text-sm">Monthly spending limit <strong className="font-semibold">₹1,500</strong></div>
           <div className="flex justify-between text-sm">Alert me at <strong className="font-semibold">80%</strong></div>
-          <AddOnTip label="Limit per project" className="text-sm text-ink-2" />
+          <AddOnTip label="Limit per project" unlocked={<ProjectLimitInput />} className="text-sm text-ink-2" />
           <span className="flex gap-2"><button type="button" className={btnPrimary}>Top up</button><button type="button" className={btnOutline}>Change limit</button></span>
         </div>
       </div>
+      <TeamReport used={used} />
       <p className="text-xs text-ink-2">All numbers here are made-up examples for the prototype.</p>
     </div>
   );
@@ -223,10 +243,97 @@ export function AccountPage() {
         <span className="text-lg font-semibold">GitHub</span>
         <p className="text-sm text-ink-2">Connect per project, in Project settings → GitHub. Architect only sees the repos you pick.</p>
       </div>
-      <div className={card}>
-        <span className="flex items-center justify-between text-lg font-semibold">Your plan <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-strong">{viewer.kind === "demo" ? "Pro" : "Free"}</span></span>
-        <p className="text-sm text-ink-2">Developer add-on: pick an exact model, limits per project, and cost per step in tokens.</p>
-      </div>
+      <PlanCard plan={viewer.kind === "demo" ? "Pro" : "Free"} />
+    </div>
+  );
+}
+
+/** Your plan, and a pretend switch for the Developer add-on so reviewers can see what it unlocks. */
+function PlanCard({ plan }: { plan: string }) {
+  const { addOn, setAddOn } = useAddOn();
+  return (
+    <div className={card}>
+      <span className="flex items-center justify-between text-lg font-semibold">
+        Your plan
+        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-strong">{addOn ? `${plan} + Developer add-on` : plan}</span>
+      </span>
+      <p className="text-sm text-ink-2">
+        {addOn ? "Developer add-on is on. " : "Developer add-on not included. "}
+        It adds: {addOnFeatures.map((f) => f.charAt(0).toLowerCase() + f.slice(1)).join(", ")}.
+      </p>
+      <span className="flex flex-wrap items-center gap-3">
+        {addOn ? (
+          <button type="button" onClick={() => setAddOn(false)} className={btnOutline}>
+            Turn off the Developer add-on
+          </button>
+        ) : (
+          <UnlockButton className={btnPrimary}>Try the Developer add-on</UnlockButton>
+        )}
+        <span className="text-xs text-ink-2">Prototype only: no payment, and it stays in this browser.</span>
+      </span>
+    </div>
+  );
+}
+
+/** Usage report by person (Developer add-on): who used what this month, and a CSV to download. */
+function TeamReport({ used }: { used: number }) {
+  const { addOn } = useAddOn();
+  const { current } = useWorkspaceList();
+  const { projects } = useProjects();
+  const people = current.people.filter((p) => !p.invited);
+  const weights = people.length === 1 ? [1] : people.map((_, i) => Math.max(1, people.length - i));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const rows = people.map((p, i) => ({
+    name: p.name,
+    role: p.role,
+    share: Math.round((used * weights[i]) / sum),
+    top: projects[i % Math.max(1, projects.length)]?.name ?? "—",
+  }));
+  const download = () => {
+    const csv = ["Person,Role,Credits this month (%),Used most on", ...rows.map((r) => [r.name, r.role, r.share, r.top].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = `${current.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-usage.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  return (
+    <div className={card}>
+      <span className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-lg font-semibold">Report by person</span>
+        {addOn ? (
+          <button type="button" onClick={download} className={btnOutline}>Download CSV</button>
+        ) : (
+          <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-ink-2">Developer add-on</span>
+        )}
+      </span>
+      {!addOn ? (
+        <>
+          <p className="text-sm text-ink-2">Who used how many credits this month, and on which project. Useful for teams sharing one workspace.</p>
+          <UnlockButton className={`${btnPrimary} self-start`}>Unlock the report</UnlockButton>
+        </>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[420px] text-left text-sm">
+            <thead>
+              <tr className="text-xs text-ink-2">
+                <th className="py-2 font-semibold">Person</th>
+                <th className="py-2 font-semibold">Credits this month</th>
+                <th className="py-2 font-semibold">Used most on</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.name + r.role} className="border-t border-line">
+                  <td className="py-2.5">{r.name} <span className="text-xs text-ink-2">· {r.role}</span></td>
+                  <td className="py-2.5">{r.share}%</td>
+                  <td className="py-2.5 text-ink-2">{r.top}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

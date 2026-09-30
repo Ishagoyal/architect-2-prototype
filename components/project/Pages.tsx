@@ -58,6 +58,6 @@ export function DatabasePage() {
 }
 
 export function CodePage({ file }: { file?: string }) {
-  const { project } = useCurrentProject();
-  return <CodeView key={file ?? ""} project={project} file={file} />;
+  const { project, update } = useCurrentProject();
+  return <CodeView key={file ?? ""} project={project} file={file} update={update} />;
 }

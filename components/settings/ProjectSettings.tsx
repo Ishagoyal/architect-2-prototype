@@ -6,6 +6,11 @@ import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useProjects } from "@/lib/projects";
 import { useViewer } from "@/lib/viewer-context";
 import { uid, type Project } from "@/lib/model";
+import { InviteModal, useWorkspaceList } from "../workspaces";
+import { Icon } from "../Icon";
+import { Switch } from "../YouCorner";
+import { UnlockButton } from "../UpgradeModal";
+import { useAddOn } from "@/lib/addon";
 
 /* Designs D1–D5, C6, S6: project settings. */
 
@@ -115,6 +120,8 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
   const [moving, setMoving] = useState(false);
   const [name, setName] = useState(p.id.replace(/-[a-z0-9]{4}$/, ""));
   const gh = p.github;
+  const { addOn } = useAddOn();
+  const autoPull = addOn && (p.sync?.pull ?? true);
 
   return (
     <div className="flex flex-col gap-4">
@@ -146,12 +153,14 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
         )}
       </div>
 
+      {gh && <TwoWaySync project={p} update={update} />}
+
       {gh && (
         <div className={card}>
           <div className="flex items-start justify-between gap-2">
             <span className="flex flex-col">
               <span className="text-lg font-semibold">Changes made outside Architect</span>
-              <span className="text-sm text-ink-2">They only come in when you ask.</span>
+              <span className="text-sm text-ink-2">{autoPull ? "Two-way sync brings them in before each build. You can also get them now." : "They only come in when you ask."}</span>
             </span>
             {gh.behind > 0 && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-strong">{gh.behind} new on GitHub</span>}
           </div>
@@ -261,6 +270,9 @@ function GitHubTab({ project: p, update }: { project: Project; update: Update })
 function TeamTab({ project: p, update }: { project: Project; update: Update }) {
   const viewer = useViewer();
   const on = !!p.reviewOn;
+  const { current } = useWorkspaceList();
+  const [inviting, setInviting] = useState(false);
+  const invited = current.people.filter((x) => x.invited);
   return (
     <div className="flex flex-col gap-4">
       <div className={card}>
@@ -282,7 +294,7 @@ function TeamTab({ project: p, update }: { project: Project; update: Update }) {
       <div className={card}>
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold">People on this project</span>
-          <button type="button" className={btnOutline}>Invite by email</button>
+          <button type="button" onClick={() => setInviting(true)} className={btnOutline}>Invite by email</button>
         </div>
         {[
           [viewer.initials, `${viewer.name} (you)`, "Owner", "Can approve"],
@@ -300,6 +312,21 @@ function TeamTab({ project: p, update }: { project: Project; update: Update }) {
             <span className="rounded-full bg-sunken px-2.5 py-1 text-xs">{r}</span>
           </div>
         ))}
+        {invited.map((x) => (
+          <div key={x.name} className="flex items-center justify-between gap-3 border-t border-line pt-3">
+            <span className="flex items-center gap-3">
+              <span className="flex size-8 items-center justify-center rounded-full border border-dashed border-line-strong text-ink-2">
+                <Icon name="people" size={13} />
+              </span>
+              <span className="flex flex-col">
+                <span className="text-sm">{x.name}</span>
+                <span className="text-xs text-ink-2">{x.detail}</span>
+              </span>
+            </span>
+            <span className="rounded-full bg-sunken px-2.5 py-1 text-xs">{x.role === "Admin" ? "Can approve" : "Can edit"}</span>
+          </div>
+        ))}
+        <InviteModal open={inviting} onClose={() => setInviting(false)} workspace={current} />
         <div className="flex items-center justify-between border-t border-line pt-3 text-xs text-ink-2">
           Choosing who can approve is part of the Team plan.
           <span className="rounded-full bg-accent-soft px-2 py-0.5 text-accent-strong">Team plan</span>
@@ -496,3 +523,45 @@ export function ProjectSettings({ project, update }: { project: Project; update:
   );
 }
 
+/** Two-way sync with your own repo (Developer add-on): versions go out as pull requests, GitHub changes come in by themselves. */
+function TwoWaySync({ project: p, update }: { project: Project; update: (fn: (p: Project) => Project) => void }) {
+  const { addOn } = useAddOn();
+  const sync = p.sync ?? { prs: true, pull: true };
+  const set = (k: "prs" | "pull") => update((q) => ({ ...q, sync: { ...(q.sync ?? { prs: true, pull: true }), [k]: !sync[k] } }));
+  return (
+    <div className={card}>
+      <span className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-lg font-semibold">Two-way sync</span>
+        <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-ink-2">Developer add-on</span>
+      </span>
+      {!addOn ? (
+        <>
+          <p className="text-sm text-ink-2">
+            Now, changes from GitHub come in when you press Get latest. With the Developer add-on it happens both ways by itself: each version goes to your repo as a pull request, and changes made on GitHub come in on their own.
+          </p>
+          <UnlockButton className={`${btnPrimary} self-start`}>Unlock two-way sync</UnlockButton>
+        </>
+      ) : (
+        <>
+          {([
+            ["prs", "Send each version to GitHub as a pull request", "You or a teammate merge it on GitHub, as usual."],
+            ["pull", "Bring in changes made on GitHub", "Before each build. If the same lines changed in both places, you choose."],
+          ] as const).map(([k, title, sub]) => (
+            <button key={k} type="button" role="switch" aria-checked={sync[k]} onClick={() => set(k)} className="flex items-start justify-between gap-3 border-t border-line pt-3 text-left">
+              <span className="flex flex-col">
+                <span className="text-sm">{title}</span>
+                <span className="text-xs text-ink-2">{sub}</span>
+              </span>
+              <Switch on={sync[k]} />
+            </button>
+          ))}
+          {sync.prs && p.versions[0] && (
+            <p className="rounded-xl bg-sunken px-3 py-2.5 text-xs text-ink-2">
+              Latest pull request: <span className="font-mono">#{p.versions[0].n + 3}</span> · v{p.versions[0].n} · {p.versions[0].title} <span className="text-ink-3">(example)</span>
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

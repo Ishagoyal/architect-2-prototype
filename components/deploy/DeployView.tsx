@@ -14,7 +14,7 @@ type Update = (fn: (p: Project) => Project) => void;
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
 const input = "w-full rounded-[10px] border border-line-strong bg-raised px-3 py-2.5 text-sm outline-none focus:border-ink-3";
 
-function address(p: Project) {
+export function address(p: Project) {
   return `${p.id.replace(/-[a-z0-9]{4}$/, "")}.architect.space`;
 }
 

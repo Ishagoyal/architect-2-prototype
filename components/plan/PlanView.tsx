@@ -783,7 +783,7 @@ export function PlanView({ project, update }: { project: Project; update: Update
 
   return (
     <div className="relative flex min-h-full flex-col">
-      <div className="sticky top-0 z-20 flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 md:px-5">
+      <div className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-3 md:px-5">
         {reviewingImport && !editing ? (
           <>
             <strong className="text-[13px] font-semibold">Here’s what we think your app does</strong>
