@@ -7,7 +7,7 @@ import { supabaseConfigured, supabaseKey, supabaseUrl } from "@/lib/supabase/con
    sends people who are signed in past it. The landing page and the six
    scenes are open to everyone. */
 
-const openPaths = ["/", "/sign-up", "/sign-in", "/auth/callback"];
+const openPaths = ["/", "/sign-up", "/sign-in", "/auth/callback", "/privacy"];
 const isScene = (path: string) => /^\/scene\/\d+$/.test(path) || /^\/p\/scene-\d+(\/|$)/.test(path);
 
 export async function proxy(request: NextRequest) {

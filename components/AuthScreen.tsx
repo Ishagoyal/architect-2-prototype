@@ -200,7 +200,13 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
           </form>
 
           {signUp && (
-            <p className="text-center text-xs text-ink-2">By continuing you agree to the Terms and Privacy Policy.</p>
+            <p className="text-center text-xs text-ink-2">
+              By continuing you agree to the{" "}
+              <Link href="/privacy" className="underline underline-offset-2">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           )}
         </div>
       </section>
