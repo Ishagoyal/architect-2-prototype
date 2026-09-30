@@ -928,7 +928,7 @@ export function stopBuild(p: Project, now = Date.now()): Project {
       },
       ...p.versions,
     ],
-    chat: [...p.chat, { id: uid(), type: "ai", text: `Stopped. Steps 1–${i} are finished and saved. Step ${i + 1} is saved as v${n}, marked “Stopped · not tested”.` }],
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Stopped. ${i === 1 ? "Step 1 is" : `Steps 1–${i} are`} finished and saved. Step ${i + 1} is saved as v${n}, marked “Stopped · not tested”.` }],
     updatedAt: now,
   };
 }

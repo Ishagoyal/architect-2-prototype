@@ -8,6 +8,7 @@ import { useDismiss } from "../useDismiss";
 import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } from "@/lib/chat";
 import { acceptCheckChange, continueBuild, lowerFirst, planTotals, rejectCheckChange, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
+import { AddOnTip } from "../AddOnTip";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
 
@@ -76,7 +77,7 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
     needs.push({
       id: "stopped",
       title: "Building is stopped",
-      lines: [i > 0 ? `Steps 1–${i} are saved. Step ${i + 1} stopped, not tested.` : `Step 1 stopped, not tested.`],
+      lines: [i > 0 ? `${i === 1 ? "Step 1 is" : `Steps 1–${i} are`} saved. Step ${i + 1} stopped, not tested.` : `Step 1 stopped, not tested.`],
       actions: [{ label: "Keep building", primary: true, onClick: () => update((p) => startBuild(p)) }],
     });
   }
@@ -380,8 +381,9 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
       </button>
       {open && (
         <div
-          className={`absolute z-50 w-[400px] max-w-[calc(100vw-32px)] rounded-2xl border border-line bg-panel p-[18px] shadow-pop ${
-            placement === "up" ? "right-0 bottom-full mb-2 md:right-auto md:left-0" : "top-full left-0 mt-2"
+          // On phones it opens as a sheet along the bottom, so it never runs off the screen.
+          className={`fixed inset-x-3 bottom-3 z-[60] rounded-2xl border border-line bg-panel p-[18px] shadow-pop md:absolute md:inset-x-auto md:z-50 md:w-[400px] ${
+            placement === "up" ? "md:right-0 md:bottom-full md:mb-2" : "md:top-full md:bottom-auto md:left-0 md:mt-2"
           }`}
         >
           <div className="text-base font-semibold">Builder model</div>
@@ -412,13 +414,7 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
               </button>
             ))}
           </div>
-          <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[13px] text-ink-2">
-            <span className="flex items-center gap-2">
-              <Icon name="lock" size={13} />
-              Pick an exact model
-            </span>
-            <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium">Developer add-on</span>
-          </div>
+          <AddOnTip label="Pick an exact model" className="mt-3 border-t border-line pt-3 text-[13px] text-ink-2" />
         </div>
       )}
     </div>
