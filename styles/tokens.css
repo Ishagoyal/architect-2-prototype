@@ -1,0 +1,93 @@
+/* Architect 2.0 colours.
+   Light = taken from the design file.
+   Dark  = quieter than the design file: neutral charcoal (less brown),
+           soft clay accent used sparingly, no bright orange, low-contrast lines. */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #F6F4EF;          /* page */
+  --rail: #EEEBE3;        /* sidebars */
+  --panel: #FFFFFF;       /* top bar, right panel, cards */
+  --raised: #FFFFFF;      /* selected nav item, inputs */
+  --hover: #F6F4EF;
+  --sunken: #F6F4EF;      /* chips, mode switch */
+  --scrim: rgba(23, 23, 27, 0.28);
+
+  /* lines */
+  --line: #E2DED4;
+  --line-strong: #DAD6CC;
+
+  /* text */
+  --text: #17171B;
+  --text-2: #55555E;
+  --text-3: #8A877F;
+
+  /* primary button */
+  --primary: #17171B;
+  --on-primary: #F6F4EF;
+
+  /* accent (links, the few things that matter) */
+  --accent: #B4470F;
+  --accent-strong: #8A3409;
+  --accent-soft: #FBEDE4;
+  --accent-line: #EBCDB8;
+  --needs-bg: #FFFBF8;
+
+  /* states */
+  --good: #1F6F4A;
+  --good-soft: #E4F2EA;
+  --info: #1F3F8F;
+  --info-soft: #E8EEFB;
+  --dev: #2A57C9;         /* "Developer view" tag */
+  --dev-soft: #E8EEFB;
+  --bad: #A3261B;
+  --bad-soft: #FBE9E7;
+  --progress: #F2A36B;    /* "in progress" dot */
+  --todo: #DAD6CC;
+
+  --shadow: 0 12px 32px rgba(23, 23, 27, 0.12);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #1A1A19;
+  --rail: #161615;
+  --panel: #1F1F1D;
+  --raised: #282826;
+  --hover: #242422;
+  --sunken: #232321;
+  --scrim: rgba(0, 0, 0, 0.5);
+
+  --line: #2C2C2A;
+  --line-strong: #373734;
+
+  --text: #E3E1DB;
+  --text-2: #A09D96;
+  --text-3: #75736D;
+
+  --primary: #D8D5CE;
+  --on-primary: #1A1A19;
+
+  --accent: #D99A74;
+  --accent-strong: #E3AC8A;
+  --accent-soft: rgba(217, 154, 116, 0.10);
+  --accent-line: rgba(217, 154, 116, 0.28);
+  --needs-bg: #21201E;
+
+  --good: #86BE9C;
+  --good-soft: rgba(134, 190, 156, 0.10);
+  --info: #A3B5DE;
+  --info-soft: rgba(163, 181, 222, 0.10);
+  --dev: #9DB2E6;
+  --dev-soft: rgba(157, 178, 230, 0.12);
+  --bad: #E39A90;
+  --bad-soft: rgba(227, 154, 144, 0.10);
+  --progress: #C98C68;
+  --todo: #373734;
+
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
