@@ -40,7 +40,22 @@ export function AddOnTip({ label, className = "", unlocked }: { label: string; c
 
 /** The exact model picker, once the add-on is on. Names are model families, as examples. */
 export function ExactModelPicker() {
-  const [model, setModel] = useState("Let Auto pick");
+  // Remembered in this browser, so closing and reopening the menu keeps the choice.
+  const [model, setModelState] = useState(() => {
+    try {
+      return localStorage.getItem("architect.model") ?? "Let Auto pick";
+    } catch {
+      return "Let Auto pick";
+    }
+  });
+  const setModel = (m: string) => {
+    setModelState(m);
+    try {
+      localStorage.setItem("architect.model", m);
+    } catch {
+      /* not remembered */
+    }
+  };
   return (
     <select
       aria-label="Exact model"

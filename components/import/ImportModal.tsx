@@ -8,15 +8,19 @@ import { useProjects } from "@/lib/projects";
 import { usePrefs } from "@/lib/prefs";
 import { useViewer } from "@/lib/viewer-context";
 import { importedProject } from "@/lib/model";
+import { useWorkspaces } from "@/lib/workspaces";
 
 /* Designs B2 (connect GitHub, only the repos you pick) and B3 (pick the repo). */
 
 const repos = ["OrderBook", "school-fees-tracker", "portfolio-site", "notes-api"];
-const KEY = "architect.github";
+const KEY_BASE = "architect.github";
 
 export function ImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const viewer = useViewer();
+  // Each workspace has its own GitHub connection.
+  const { current: workspace } = useWorkspaces(viewer.id);
+  const KEY = workspace === "main" ? KEY_BASE : `${KEY_BASE}.${workspace}`;
   const { add } = useProjects();
   const { setDevView } = usePrefs();
   const handle = viewer.kind === "demo" ? "alexmorgan" : viewer.firstName.toLowerCase();
@@ -40,7 +44,7 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, KEY]);
 
   if (!open) return null;
 

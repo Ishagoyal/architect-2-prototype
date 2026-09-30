@@ -400,8 +400,10 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
       {open && (
         <div
           // On phones it opens as a sheet along the bottom, so it never runs off the screen.
-          className={`fixed inset-x-3 bottom-3 z-[60] rounded-2xl border border-line bg-panel p-[18px] shadow-pop md:absolute md:inset-x-auto md:z-50 md:w-[400px] ${
-            placement === "up" ? "md:right-0 md:bottom-full md:mb-2" : "md:top-full md:bottom-auto md:left-0 md:mt-2"
+          // Phones: a sheet along the bottom that scrolls on short screens. Tablets (chat in a sheet): lines up
+          // with the button's left edge. Desktop (chat on the right): lines up with its right edge.
+          className={`fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-line bg-panel p-[18px] shadow-pop md:absolute md:inset-x-auto md:z-50 md:max-h-none md:w-[400px] md:overflow-visible ${
+            placement === "up" ? "md:bottom-full md:left-0 md:mb-2 lg:right-0 lg:left-auto" : "md:top-full md:bottom-auto md:left-0 md:mt-2"
           }`}
         >
           <div className="text-base font-semibold">Builder model</div>

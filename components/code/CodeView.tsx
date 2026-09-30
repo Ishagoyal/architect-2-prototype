@@ -40,13 +40,13 @@ export function CodeView({ project: p, file, update }: { project: Project; file?
   const [open, setOpen] = useState(file && files[file] ? file : names.find((n) => n.startsWith("lib/")) ?? "plan.md");
   const [q, setQ] = useState("");
   const [term, setTerm] = useState<string[]>(["$ "]);
-  const locked = p.build.status === "running";
+  const locked = p.build.status === "running" || p.build.status === "checking";
   const lines = (files[open] ?? "").split("\n");
   const [draft, setDraft] = useState<string | null>(null);
   const editable = addOn && !locked && !system(open) && !!update;
   const text = draft ?? files[open] ?? "";
   const save = () => {
-    if (draft === null || !update) return;
+    if (draft === null || !update || locked) return;
     const name = open;
     update((q) => ({
       ...q,
@@ -69,7 +69,7 @@ export function CodeView({ project: p, file, update }: { project: Project; file?
                 <UnlockButton className="font-medium text-accent">Unlock</UnlockButton>
               </>
             ) : locked ? (
-              "Read-only while a step runs · editing unlocks after it"
+              "Read-only while a step or its checks run · editing unlocks after"
             ) : (
               `${names.length} files · click a file to edit it`
             )}
