@@ -306,8 +306,8 @@ function PanelFrame({ title, sub, onClose, children, footer }: { title: string; 
           <Icon name="close" size={15} />
         </button>
       </div>
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">{children}</div>
-      {footer && <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3">{footer}</div>}
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 max-md:pb-8">{children}</div>
+      {footer && <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-3 max-md:pb-20">{footer}</div>}
     </div>
   );
 }
@@ -459,7 +459,8 @@ export function AgentsView({ project, update }: { project: Project; update: Upda
   const agents = agentsFor(project);
   const autos = automationsFor(project);
   const [sel, setSel] = useState<string>(agents[0]?.key ?? autos[0]?.key ?? "");
-  const [open, setOpen] = useState(true);
+  // On phones the diagram comes first; tap a box to open its panel.
+  const [open, setOpen] = useState(() => typeof window === "undefined" || window.innerWidth >= 1024);
   const [pick, setPick] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const { collapsePanel } = useProjectUI();
@@ -517,7 +518,7 @@ export function AgentsView({ project, update }: { project: Project; update: Upda
 
         {agent && (
           <div className="relative flex min-h-0 flex-1">
-            <div className="flex min-w-0 flex-1 items-center justify-center overflow-auto p-6" style={dotted}>
+            <div className="flex min-w-0 flex-1 items-start justify-center overflow-auto p-6 pb-24 md:items-center md:pb-6" style={dotted}>
               <div className="flex flex-col items-center gap-0">
                 <div className="flex flex-col items-center gap-3 xl:flex-row xl:gap-0">
                   <Box label="When" title={agent.key === "voice" ? "A voice note arrives" : "The app asks"} sub={agent.asks} onClick={() => setOpen(true)} />
