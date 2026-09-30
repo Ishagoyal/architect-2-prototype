@@ -7,7 +7,7 @@ import { useProjects } from "@/lib/projects";
 import { useViewer } from "@/lib/viewer-context";
 import { DEMO_PROJECT_ID } from "@/lib/demo";
 import { journeys, runActs, useTour, type Act, type JourneyKey } from "@/lib/tour";
-import type { Project } from "@/lib/model";
+import { lowerFirst, type Project } from "@/lib/model";
 
 /* The guide bar: says what to click on this screen for the journey you picked,
    with "Show me" to do it for you. Only in the demo. */
@@ -16,6 +16,10 @@ type Step = { n: number; of: number; text: string; acts?: Act[]; done?: boolean 
 
 const P = `/p/${DEMO_PROJECT_ID}`;
 
+const at = (path: string, href: string) => path === href.split("?")[0];
+
+/** The guide for one journey: what you're looking at, and what "Show me" does next.
+    In the demo nothing moves by itself; every change comes from "Show me". */
 function stepFor(key: JourneyKey, since: number, path: string, projects: Project[]): Step {
   const demo = projects.find((p) => p.id === DEMO_PROJECT_ID);
   switch (key) {
@@ -23,88 +27,90 @@ function stepFor(key: JourneyKey, since: number, path: string, projects: Project
       const np = projects.filter((p) => !p.imported && p.id !== DEMO_PROJECT_ID && p.createdAt >= since).sort((a, b) => b.createdAt - a.createdAt)[0];
       if (!np) {
         if (path.startsWith("/new"))
-          return { n: 2, of: 4, text: "This is what Architect understood from your words. Change anything you like, then click Confirm and see the plan.", acts: [{ click: '[data-tour="refine-confirm"]' }] };
+          return { n: 3, of: 6, text: "Architect read the idea and filled in the details: the name, what it does, who it’s for and the app’s AI. Nothing is built yet. Next, Show me confirms these.", acts: [{ click: '[data-tour="refine-confirm"]' }] };
         if (path === "/home")
-          return { n: 1, of: 4, text: "Pick one of the ideas below, or type your own, then press the ↑ button.", acts: [{ click: '[data-tour="idea"]' }, { click: '[data-tour="send"]' }] };
-        return { n: 1, of: 4, text: "It starts on Home, where you describe an app.", acts: [{ go: "/home" }] };
+          return { n: 2, of: 6, text: "This is Home, where you describe an app in your own words. Next, Show me picks one of the ideas and sends it.", acts: [{ click: '[data-tour="idea"]' }, { click: '[data-tour="send"]' }] };
+        return { n: 1, of: 6, text: "This is a finished demo app. Let’s build a new one from a single sentence. Show me opens Home.", acts: [{ go: "/home" }] };
       }
       const base = `/p/${np.id}`;
-      if (np.build.status === "done") return { n: 4, of: 4, text: "", done: true };
+      const onApp: Act[] = path === `${base}/app` ? [] : [{ go: `${base}/app` }];
+      if (np.build.status === "done") return { n: 6, of: 6, text: "", done: true };
       if (np.stage === "plan" && np.build.status === "idle")
         return {
-          n: 3,
-          of: 4,
-          text: "This is the plan: what the app does, the steps, their checks and cost. Nothing is built yet. Try asking for a change in the chat, then click Confirm plan and build.",
-          acts: [...(path === `${base}/plan` ? [] : [{ go: `${base}/plan` }]), { click: '[data-tour="plan-confirm"]' }, { click: '[data-tour="build-without"]', optional: true }],
+          n: 4,
+          of: 6,
+          text: "This is the plan: what the app does, the steps to build it, the checks for each step and the usual cost. Nothing is built yet. Next, Show me confirms the plan and builds step 1.",
+          acts: [...(path === `${base}/plan` ? [] : [{ go: `${base}/plan` } as Act]), { click: '[data-tour="plan-confirm"]' }, { click: '[data-tour="build-without"]', optional: true }],
         };
-      return {
-        n: 4,
-        of: 4,
-        text:
-          np.build.status === "stopped"
-            ? "The build is stopped. Click Keep building to carry on."
-            : np.build.status === "waiting"
-              ? "Review is on, so each step waits for you. Click Continue."
-              : "It’s building, step by step: each step shows its result, then its checks run. It takes about half a minute. Try Phone or Select above the preview.",
-        acts: path === `${base}/app` ? undefined : [{ go: `${base}/app` }],
-      };
+      const cur = np.plan.steps[np.build.step];
+      if (np.build.status === "running")
+        return { n: 5, of: 6, text: `Building step ${np.build.step + 1} of ${np.plan.steps.length}: ${lowerFirst(cur.title)}. Watch the preview: it shows the step’s result, then its checks run.`, acts: onApp.length ? onApp : undefined };
+      if (np.build.status === "checking") return { n: 6, of: 6, text: "Every step is built. Now the whole-app checks run, once more, from start to finish." };
+      if (np.build.status === "waiting") {
+        const built = np.plan.steps[np.stepsDone - 1];
+        return {
+          n: 5,
+          of: 6,
+          text: `Step ${np.stepsDone} is built: ${lowerFirst(built.builds)} Next, Show me builds step ${np.build.step + 1}: ${lowerFirst(cur.title)}.`,
+          acts: [...onApp, { click: '[data-tour="continue"]' }],
+        };
+      }
+      return { n: 5, of: 6, text: "The build is stopped. Show me carries on.", acts: [...onApp, { click: '[data-tour="keep-building"]' }] };
     }
     case "import": {
       const ip = projects.filter((p) => p.imported && p.createdAt >= since).sort((a, b) => b.createdAt - a.createdAt)[0];
       if (!ip)
         return {
           n: 1,
-          of: 3,
-          text: "Click + in the box, then Import project. Pick the repo Architect may see, then Import project.",
+          of: 4,
+          text: "You can also bring in an app you already have. Show me opens the import, connects GitHub with only the repos you pick, and imports CookBridge.",
           acts: [...(path === "/home" ? [] : [{ go: "/home" } as Act]), { click: '[data-tour="plus"]' }, { click: '[data-tour="import-open"]' }, { click: '[data-tour="import-connect"]', optional: true }, { click: '[data-tour="import-go"]' }],
         };
       const base = `/p/${ip.id}`;
       if (ip.imported?.setup === "keys")
-        return { n: 2, of: 3, text: "Architect found the keys your code uses, and warns about one saved in the repo. Nothing real is needed here: click Continue.", acts: [...(path === `${base}/setup` ? [] : [{ go: `${base}/setup` } as Act]), { click: '[data-tour="setup-continue"]' }] };
+        return { n: 2, of: 4, text: "Architect copied the code and found the keys it uses. It also warns that a key is saved in the repo’s history. Next, Show me moves on (in the demo, no real keys are needed).", acts: [...(path === `${base}/setup` ? [] : [{ go: `${base}/setup` } as Act]), { click: '[data-tour="setup-continue"]' }] };
       if (ip.imported?.setup === "plan")
-        return { n: 3, of: 3, text: "This is what Architect thinks your app does, written from the code, including what works today. Check it, then click Looks right.", acts: [...(path === `${base}/plan` ? [] : [{ go: `${base}/plan` } as Act]), { click: '[data-tour="looks-right"]' }] };
-      return { n: 3, of: 3, text: "", done: true };
+        return { n: 3, of: 4, text: "This is what Architect thinks the app does, written from the code: its screens, its AI, and what works today (6 of 8 things). Next, Show me confirms it looks right.", acts: [...(path === `${base}/plan` ? [] : [{ go: `${base}/plan` } as Act]), { click: '[data-tour="looks-right"]' }] };
+      return { n: 4, of: 4, text: "", done: true };
     }
     case "agents": {
-      if (demo?.automationFixed) return { n: 2, of: 2, text: "", done: true };
-      const here = path === `${P}/agents`;
+      if (demo?.automationFixed) return { n: 3, of: 3, text: "", done: true };
+      if (!at(path, `${P}/agents`))
+        return { n: 1, of: 3, text: "Agents are the AI inside your app. Show me opens the Agents tab.", acts: [{ go: `${P}/agents` }] };
       return {
-        n: here ? 2 : 1,
-        of: 2,
-        text: here
-          ? "Click any box to change the agent. Then click Every day 9 PM on the left: its last step keeps failing. Click Use email too to fix it."
-          : "Agents are the AI inside your app. Open the Agents tab.",
-        acts: [...(here ? [] : [{ go: `${P}/agents` } as Act]), { click: '[data-tour="auto-nine"]' }, { click: '[data-tour="use-email"]' }],
+        n: 2,
+        of: 3,
+        text: "This is the meal planner: when it runs, what it does, what it must never do and what it can use, all in plain words. The 9 PM automation next to it keeps failing. Show me opens it and applies the suggested fix.",
+        acts: [{ click: '[data-tour="auto-nine"]' }, { click: '[data-tour="use-email"]' }],
       };
     }
     case "github": {
       const gh = demo?.github;
-      const go: Act[] = path === `${P}/settings` ? [] : [{ go: `${P}/settings?tab=github` }];
-      if (!gh) return { n: 1, of: 3, text: "The code lives in Architect’s GitHub. Click Move to my GitHub, then Move it.", acts: [...go, { click: '[data-tour="gh-move"]' }, { click: '[data-tour="gh-move-confirm"]' }] };
+      const go: Act[] = at(path, `${P}/settings`) ? [] : [{ go: `${P}/settings?tab=github` }];
+      if (!gh) return { n: 1, of: 4, text: "Right now the code lives in Architect’s GitHub. Show me moves it to your own GitHub, with its full history.", acts: [...go, { click: '[data-tour="gh-move"]' }, { click: '[data-tour="gh-move-confirm"]' }] };
       if (gh.clash)
-        return { n: 3, of: 3, text: "The same lines changed on GitHub and in Architect. Pick one, or click Let AI suggest a combined version, then Approve.", acts: [...go, { click: '[data-tour="gh-ai"]' }, { click: '[data-tour="gh-approve"]' }] };
-      if (gh.behind > 0) return { n: 2, of: 3, text: "A teammate changed files on GitHub. They only come in when you ask: click Get latest.", acts: [...go, { click: '[data-tour="gh-latest"]' }] };
-      return { n: 3, of: 3, text: "", done: true };
+        return { n: 3, of: 4, text: "One file changed in the same lines on GitHub and in Architect. You choose; nothing is applied on its own. Show me asks the AI for a combined version and approves it.", acts: [...go, { click: '[data-tour="gh-ai"]' }, { click: '[data-tour="gh-approve"]' }] };
+      if (gh.behind > 0) return { n: 2, of: 4, text: "A teammate changed 3 files on GitHub. Changes made outside Architect only come in when you ask. Show me gets them.", acts: [...go, { click: '[data-tour="gh-latest"]' }] };
+      return { n: 4, of: 4, text: "", done: true };
     }
     case "deploy": {
       const d = demo?.deploy;
-      const go: Act[] = path === `${P}/deploy` ? [] : [{ go: `${P}/deploy` }];
-      if (d?.status === "live" && d.liveVersion) return { n: 3, of: 3, text: "", done: true };
-      if (d?.status === "deploying") return { n: 2, of: 3, text: "Going live: every check runs again, then Architect opens the live link to make sure it loads." };
+      const go: Act[] = at(path, `${P}/deploy`) ? [] : [{ go: `${P}/deploy` }];
+      if (d?.status === "live" && d.liveVersion) return { n: 4, of: 4, text: "", done: true };
+      if (d?.status === "deploying") return { n: 2, of: 4, text: "Going live: every check runs again, then Architect opens the live link to make sure it really loads." };
       if (d?.status === "failed")
         return {
           n: 3,
-          of: 3,
+          of: 4,
           text: d.liveKey
-            ? "The key is added. Click Try again."
-            : "The live check failed, and nothing broke: nobody saw a broken page. Click Add the Live key (type anything), then Try again.",
+            ? "The missing key is added. Show me tries again."
+            : "The live link didn’t load: the live app is missing a key. Nothing broke and nobody saw an error, because the app isn’t switched over until the check passes. Show me adds the key and tries again.",
           acts: d.liveKey
             ? [...go, { click: '[data-tour="deploy-retry"]' }]
             : [...go, { click: '[data-tour="deploy-key"]' }, { fill: '[data-tour="deploy-key-input"]', value: "sk-demo-key-12345" }, { click: '[data-tour="deploy-key-save"]' }, { click: '[data-tour="deploy-retry"]' }],
         };
-      if (demo && demo.build.status !== "done" && !d?.liveVersion)
-        return { n: 1, of: 3, text: "The demo app is still building. It finishes in under a minute, and this updates by itself.", acts: path === `${P}/app` ? undefined : [{ go: `${P}/app` }] };
-      return { n: 1, of: 3, text: "The app is built and every check passed. Click Go live.", acts: [...go, { click: '[data-tour="deploy-go"]' }] };
+      if (!at(path, `${P}/deploy`)) return { n: 1, of: 4, text: "The demo app is built and every check passed. Show me opens Deploy.", acts: go };
+      return { n: 1, of: 4, text: "This is how the app will appear when it’s live. Show me puts it live.", acts: [{ click: '[data-tour="deploy-go"]' }] };
     }
   }
 }
@@ -116,6 +122,16 @@ export function TourGuide() {
   const { projects, loaded } = useProjects();
   const { active, tried, start, finish, stop } = useTour();
   const [busy, setBusy] = useState(false);
+
+  // Arriving from "Try the demo" (?tour=1): start the first journey straight away.
+  useEffect(() => {
+    if (viewer.kind !== "demo") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tour") !== "1") return;
+    url.searchParams.delete("tour");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    start("prompt");
+  }, [viewer.kind, start]);
 
   const step = active && loaded ? stepFor(active.key, active.since, path, projects) : null;
 

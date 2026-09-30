@@ -418,12 +418,12 @@ export function AppView({ project: p, update, now }: { project: Project; update:
           </button>
         )}
         {p.build.status === "waiting" && (
-          <button type="button" onClick={() => update((q) => continueBuild(q))} className="flex h-8 shrink-0 items-center rounded-[9px] bg-primary px-3 text-[13px] font-medium text-on-primary">
+          <button type="button" data-tour="continue" onClick={() => update((q) => continueBuild(q))} className="flex h-8 shrink-0 items-center rounded-[9px] bg-primary px-3 text-[13px] font-medium text-on-primary">
             Continue
           </button>
         )}
         {p.build.status === "stopped" && (
-          <button type="button" onClick={() => update((q) => startBuild(q))} className="flex h-8 shrink-0 items-center rounded-[9px] bg-primary px-3 text-[13px] font-medium text-on-primary">
+          <button type="button" data-tour="keep-building" onClick={() => update((q) => startBuild(q))} className="flex h-8 shrink-0 items-center rounded-[9px] bg-primary px-3 text-[13px] font-medium text-on-primary">
             Keep building
           </button>
         )}

@@ -83,7 +83,6 @@ export function DemoTourCard({ autoOpenMedia }: { autoOpenMedia: string }) {
   const show = useCallback(() => setOpen(true), []);
   const ref = useDismiss<HTMLDivElement>(open, close);
   const { tried, mark } = useTried();
-  useAutoOpen(autoOpenMedia, show);
   if (viewer.kind !== "demo") return null;
 
   return (
@@ -120,7 +119,6 @@ export function DemoTourIcon({ autoOpenMedia }: { autoOpenMedia: string }) {
   const show = useCallback(() => setOpen(true), []);
   const ref = useDismiss<HTMLDivElement>(open, close);
   const { tried, mark } = useTried();
-  useAutoOpen(autoOpenMedia, show);
   if (viewer.kind !== "demo") return null;
 
   return (
@@ -157,7 +155,6 @@ export function DemoTourButton({
   const close = useCallback(() => setOpen(false), []);
   const show = useCallback(() => setOpen(true), []);
   const { tried, mark } = useTried();
-  useAutoOpen(autoOpenMedia, show);
   if (viewer.kind !== "demo") return null;
 
   return (

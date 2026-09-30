@@ -118,6 +118,8 @@ export type Project = {
   automationFixed?: boolean;
   /** Review changes (design S6). */
   reviewOn?: boolean;
+  /** Demo: build one step per "Show me", so nothing moves by itself. */
+  stepByStep?: boolean;
   /** Saved changes to an agent (design C1), by agent key. */
   agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
   /** GitHub (designs D1–D5). */
@@ -738,12 +740,19 @@ function stepDone(p: Project, at: number): Project {
     files: step.files,
     snap: { plan: p.plan, stepsDone: i + 1 },
   };
-  const wait = !!next && !!p.reviewOn;
+  const wait = !!next && (!!p.reviewOn || !!p.stepByStep);
   const chat: ChatItem[] = [
     { id: uid(), type: "step", title: `Step ${i + 1} done: ${step.title}`, detail: `${step.checks.length} of ${step.checks.length} checks passed · used ${used}% of this month’s credits` },
     { id: uid(), type: "version", n, text: `saved · ${step.title} added` },
   ];
-  if (next && wait) chat.push({ id: uid(), type: "ai", text: `Step ${i + 1} is ready. Review is on, so I’ll wait for you before step ${i + 2} (${lowerFirst(next.title)}).` });
+  if (next && wait)
+    chat.push({
+      id: uid(),
+      type: "ai",
+      text: p.reviewOn
+        ? `Step ${i + 1} is ready. Review is on, so I’ll wait for you before step ${i + 2} (${lowerFirst(next.title)}).`
+        : `Step ${i + 1} is built. Next: step ${i + 2} (${lowerFirst(next.title)}).`,
+    });
   else if (next) chat.push({ id: uid(), type: "ai", text: `Now building step ${i + 2}: ${lowerFirst(next.title)}.` });
   return {
     ...p,
