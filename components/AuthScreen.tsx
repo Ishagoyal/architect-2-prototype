@@ -180,6 +180,15 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
 
           <form
             action={startDemo}
+            onSubmit={() => {
+              // The demo always starts in the default view, whatever this browser used before.
+              try {
+                localStorage.setItem("architect.devView", "off");
+              } catch {
+                /* not remembered; fine */
+              }
+              document.documentElement.dataset.dev = "off";
+            }}
             className="flex items-center justify-between gap-3 rounded-xl border border-accent-line bg-needs px-4 py-3"
           >
             <span className="flex flex-col gap-0.5">

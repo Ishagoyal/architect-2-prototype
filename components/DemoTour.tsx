@@ -52,7 +52,7 @@ function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => v
                   }`}
                 >
                   {done ? <Icon name="check" size={13} strokeWidth={2.6} /> : i + 1}
-                  {done && <span className="sr-only">(tried)</span>}
+                  {done && <span className="sr-only">(done)</span>}
                 </span>
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-sm font-medium">{j.title}</span>
@@ -70,7 +70,7 @@ function TourList({ tried, onPick }: { tried: string[]; onPick: (k: string) => v
 function Count({ n }: { n: number }) {
   return (
     <span className="text-[11.5px] font-medium text-accent">
-      {n} of {journeys.length} tried
+      {n} of {journeys.length} done
     </span>
   );
 }
@@ -125,7 +125,7 @@ export function DemoTourIcon({ autoOpenMedia }: { autoOpenMedia: string }) {
     <div ref={ref} className="relative mb-1 flex justify-center">
       <button
         type="button"
-        title={`Demo tour · ${tried.length} of ${journeys.length} tried`}
+        title={`Demo tour · ${tried.length} of ${journeys.length} done`}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="flex size-10 items-center justify-center rounded-[10px] border border-accent-line bg-needs text-accent"
