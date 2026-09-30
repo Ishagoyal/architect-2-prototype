@@ -3,18 +3,29 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/server";
-import { DEMO_COOKIE } from "@/lib/viewer";
-import { DEMO_PROJECT_ID } from "@/lib/demo";
+import { DEMO_COOKIE, getViewer } from "@/lib/viewer";
 
 export type AuthState = { error?: string; notice?: string } | undefined;
 
 const NOT_SET_UP = "Accounts aren’t switched on in this preview yet. Try the demo to look around.";
 
-/** "Try the demo": no sign-up, opens Home with the demo tour started. */
-export async function startDemo() {
+async function enterDemo() {
   const store = await cookies();
   store.set(DEMO_COOKIE, "1", { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
+}
+
+/** "Try the demo": no sign-up, opens Home with the demo tour started. */
+export async function startDemo() {
+  await enterDemo();
   redirect("/home?tour=1");
+}
+
+/** The landing page's "Build it →": opens Refine with the idea, the same path Home uses.
+    People who aren't signed in (or in the demo yet) go in as the demo. */
+export async function buildIdea(form: FormData) {
+  const idea = String(form.get("idea") ?? "").trim();
+  if (!(await getViewer())) await enterDemo();
+  redirect(idea ? `/new?idea=${encodeURIComponent(idea)}` : "/home");
 }
 
 export async function signOut() {

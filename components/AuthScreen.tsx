@@ -172,7 +172,7 @@ export function AuthScreen({ mode, linkError = false }: { mode: "sign-up" | "sig
             ) : (
               <>
                 New here?{" "}
-                <Link href="/" className="font-medium text-accent hover:text-accent-strong">
+                <Link href="/sign-up" className="font-medium text-accent hover:text-accent-strong">
                   Create an account
                 </Link>
               </>

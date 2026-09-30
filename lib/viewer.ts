@@ -2,13 +2,14 @@ import "server-only";
 import { cookies } from "next/headers";
 import { getSupabase } from "./supabase/server";
 
-/* Who is looking at the page: someone trying the demo, or a signed-in account. */
+/* Who is looking at the page: someone trying the demo, a signed-in account,
+   or anyone opening one of the landing page's six scenes. */
 
 export const DEMO_COOKIE = "architect_demo";
 
 export type Viewer = {
-  kind: "demo" | "account";
-  /** Supabase user id, or "demo". Keeps each person's browser copy separate. */
+  kind: "demo" | "account" | "scene";
+  /** Supabase user id, "demo" or "scene". Keeps each person's browser copy separate. */
   id: string;
   name: string;
   firstName: string;
@@ -29,7 +30,7 @@ export function makeViewer(kind: Viewer["kind"], name: string, extra: Partial<Vi
   const initials = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : clean.slice(0, 2)).toUpperCase();
   return {
     kind,
-    id: kind === "demo" ? "demo" : "",
+    id: kind === "account" ? "" : kind,
     name: clean,
     firstName,
     initials,
@@ -44,6 +45,8 @@ export function makeViewer(kind: Viewer["kind"], name: string, extra: Partial<Vi
 
 // The demo uses a neutral name, with the design file’s projects.
 export const demoViewer = makeViewer("demo", "Alex Morgan", { role: "Product Management" });
+/** Scenes use the same name as the demo, but nothing links them to it. */
+export const sceneViewer = makeViewer("scene", "Alex Morgan", { role: "Product Management" });
 
 export async function getViewer(): Promise<Viewer | null> {
   const store = await cookies();

@@ -93,7 +93,7 @@ export function DeployView({ project: p, update, now }: { project: Project; upda
   };
 
   const bar = (icon: "check" | "explore", strong: string, rest: string, action?: React.ReactNode) => (
-    <div className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 text-[13px] md:px-5">
+    <div data-scene="deploy-bar" className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2 text-[13px] md:px-5">
       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className={icon === "check" ? "text-good" : "text-ink-2"}>
           <Icon name={icon} size={15} strokeWidth={icon === "check" ? 2.4 : 1.8} />
@@ -137,7 +137,7 @@ export function DeployView({ project: p, update, now }: { project: Project; upda
               The live page showed an error: {p.kind === "meal" ? "the meal list" : "the main screen"} couldn’t load because the Live key for OpenAI is missing.
             </p>
           </div>
-          <div className={`${card} self-start`}>
+          <div data-scene="what-to-do" className={`${card} self-start`}>
             <h2 className="text-lg font-semibold">What to do</h2>
             <p className="text-sm text-ink-2">
               {d.liveKey ? "The Live key is added. Try again." : "Add the Live OpenAI key, then try again. Preview worked because it uses the Preview key."}

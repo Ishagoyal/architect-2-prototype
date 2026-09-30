@@ -7,7 +7,9 @@ import { getBrowserSupabase } from "./supabase/client";
 
 /* Where projects live while you use the app.
    Demo: in this browser only (made-up data, reset by leaving the demo).
-   Account: in this browser, and saved to Supabase so they're there on any device. */
+   Account: in this browser, and saved to Supabase so they're there on any device.
+   Scene: in memory only. Each scene starts fresh every time it opens, and nothing
+   done in it reaches the demo (or the other way round). */
 
 type Ctx = {
   loaded: boolean;
@@ -27,6 +29,7 @@ export const DEMO_STORAGE_KEY = "architect.projects.demo3";
 const keyFor = (owner: string) => (owner === "demo" ? DEMO_STORAGE_KEY : `architect.projects.account.${owner}`);
 
 function readLocal(owner: string): Project[] | null {
+  if (owner === "scene") return null;
   try {
     const raw = localStorage.getItem(keyFor(owner));
     return raw ? (JSON.parse(raw) as Project[]) : null;
@@ -36,6 +39,7 @@ function readLocal(owner: string): Project[] | null {
 }
 
 function writeLocal(owner: string, list: Project[]) {
+  if (owner === "scene") return;
   try {
     localStorage.setItem(keyFor(owner), JSON.stringify(list));
   } catch {
@@ -43,7 +47,18 @@ function writeLocal(owner: string, list: Project[]) {
   }
 }
 
-export function ProjectsProvider({ kind, owner, children }: { kind: "demo" | "account"; owner: string; children: React.ReactNode }) {
+export function ProjectsProvider({
+  kind,
+  owner,
+  seed,
+  children,
+}: {
+  kind: "demo" | "account" | "scene";
+  owner: string;
+  /** Scenes: the ready-made projects to start from. */
+  seed?: () => Project[];
+  children: React.ReactNode;
+}) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -53,7 +68,7 @@ export function ProjectsProvider({ kind, owner, children }: { kind: "demo" | "ac
   useEffect(() => {
     let cancelled = false;
     const local = readLocal(owner);
-    const start = local ?? (kind === "demo" ? demoSeeds() : []);
+    const start = local ?? (kind === "scene" ? (seed?.() ?? []) : kind === "demo" ? demoSeeds() : []);
     setProjects(start.map((p) => advance(p)));
     setLoaded(true);
 
@@ -82,6 +97,7 @@ export function ProjectsProvider({ kind, owner, children }: { kind: "demo" | "ac
     return () => {
       cancelled = true;
     };
+    // `seed` only matters for the first load.
   }, [kind, owner]);
 
   // Save

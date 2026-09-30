@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 /* Two settings that belong to the person and are remembered on this device:
    the theme (light / dark / match my computer) and Developer view.
@@ -27,6 +27,8 @@ type Prefs = {
   toggleTheme: () => void;
   devView: boolean;
   setDevView: (on: boolean) => void;
+  /** Scenes: show Developer view on or off without saving it. `null` puts back the saved choice. */
+  holdDevView: (on: boolean | null) => void;
 };
 
 const PrefsContext = createContext<Prefs | null>(null);
@@ -55,6 +57,7 @@ export function PrefsProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeChoice>("system");
   const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
   const [devView, setDevState] = useState(false);
+  const held = useRef(false);
 
   // Pick up what the pre-paint script already applied.
   useEffect(() => {
@@ -91,12 +94,19 @@ export function PrefsProvider({ children }: { children: React.ReactNode }) {
 
   const setDevView = useCallback((on: boolean) => {
     document.documentElement.dataset.dev = on ? "on" : "off";
-    write(DEV_KEY, on ? "on" : "off");
+    if (!held.current) write(DEV_KEY, on ? "on" : "off");
     setDevState(on);
   }, []);
 
+  const holdDevView = useCallback((on: boolean | null) => {
+    held.current = on !== null;
+    const next = on ?? read(DEV_KEY) === "on";
+    document.documentElement.dataset.dev = next ? "on" : "off";
+    setDevState(next);
+  }, []);
+
   return (
-    <PrefsContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme, devView, setDevView }}>
+    <PrefsContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme, devView, setDevView, holdDevView }}>
       {children}
     </PrefsContext.Provider>
   );

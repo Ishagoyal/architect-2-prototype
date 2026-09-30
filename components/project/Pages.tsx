@@ -12,9 +12,9 @@ import { TestsView } from "../tests/TestsView";
 import { VersionsView } from "../versions/VersionsView";
 import { useCurrentProject } from "./useCurrentProject";
 
-export function AppPage() {
+export function AppPage({ page }: { page?: number }) {
   const { project, update, now } = useCurrentProject();
-  return <AppView project={project} update={update} now={now} />;
+  return <AppView project={project} update={update} now={now} initialPage={page} />;
 }
 
 export function PlanPage() {
@@ -23,13 +23,13 @@ export function PlanPage() {
 }
 
 export function TestsPage() {
-  const { project, now } = useCurrentProject();
-  return <TestsView project={project} now={now} />;
+  const { project, update, now } = useCurrentProject();
+  return <TestsView project={project} update={update} now={now} />;
 }
 
-export function VersionsPage({ selected }: { selected?: number }) {
+export function VersionsPage({ selected, tab }: { selected?: number; tab?: "files" }) {
   const { project, update, now } = useCurrentProject();
-  return <VersionsView key={selected ?? "latest"} project={project} update={update} now={now} selected={selected} />;
+  return <VersionsView key={`${selected ?? "latest"}-${tab ?? ""}`} project={project} update={update} now={now} selected={selected} initialTab={tab} />;
 }
 
 export function DeployPage() {
