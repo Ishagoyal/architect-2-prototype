@@ -194,11 +194,11 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
               Cancel
             </button>
             {connected ? (
-              <button type="button" disabled={source !== "GitHub"} onClick={doImport} className={btnPrimary}>
+              <button type="button" data-tour="import-go" disabled={source !== "GitHub"} onClick={doImport} className={btnPrimary}>
                 Import project
               </button>
             ) : (
-              <button type="button" disabled={scope === "only" && picked.length === 0} onClick={connect} className={btnPrimary}>
+              <button type="button" data-tour="import-connect" disabled={scope === "only" && picked.length === 0} onClick={connect} className={btnPrimary}>
                 Connect
               </button>
             )}

@@ -374,6 +374,7 @@ function AutomationView({ auto, project, update, pick, setPick }: { auto: Auto; 
                   {failing && (
                     <button
                       type="button"
+                      data-tour="use-email"
                       onClick={() => {
                         setHow("Both");
                         update((q) => ({ ...q, automationFixed: true, chat: [...q.chat, { id: uid(), type: "ai", text: "Done. “Notify family” now sends by push and email, so a blocked notification doesn’t lose the ideas. The next run is tonight at 9 PM." }] }));
@@ -514,7 +515,7 @@ export function AgentsView({ project, update }: { project: Project; update: Upda
           ))}
           {autos.length > 0 && <span className="px-2 pt-3 pb-1 text-[11px] font-semibold tracking-[0.08em] text-ink-2 uppercase">Automations</span>}
           {autos.map((a) => (
-            <button key={a.key} type="button" onClick={() => { setSel(a.key); setPick(a.key === "nine" && !project.automationFixed ? "n" : null); }} className={`flex items-center justify-between rounded-xl px-3 py-2 text-left ${sel === a.key ? "border border-line-strong bg-raised" : "hover:bg-hover"}`}>
+            <button key={a.key} type="button" data-tour={`auto-${a.key}`} onClick={() => { setSel(a.key); setPick(a.key === "nine" && !project.automationFixed ? "n" : null); }} className={`flex items-center justify-between rounded-xl px-3 py-2 text-left ${sel === a.key ? "border border-line-strong bg-raised" : "hover:bg-hover"}`}>
               <span className="flex flex-col">
                 <span className="text-sm">{a.name}</span>
                 <span className="text-xs text-ink-2">{a.sub}</span>

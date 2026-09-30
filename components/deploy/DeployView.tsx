@@ -58,14 +58,14 @@ function KeyModal({ open, onClose, onSave }: { open: boolean; onClose: () => voi
           <button type="button" onClick={onClose} className={btnOutline}>
             Cancel
           </button>
-          <button type="button" disabled={key.trim().length < 8} onClick={onSave} className={btnPrimary}>
+          <button type="button" data-tour="deploy-key-save" disabled={key.trim().length < 8} onClick={onSave} className={btnPrimary}>
             Save key
           </button>
         </>
       }
     >
       <p>Your live app uses this key. The preview keeps using the Preview key.</p>
-      <input type="password" aria-label="Live OpenAI key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-…" className={input} />
+      <input type="password" data-tour="deploy-key-input" aria-label="Live OpenAI key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-…" className={input} />
       <p className="text-[13px]">For security, saved keys can’t be shown again. To change one, replace it. (This is a demo: anything you type is thrown away.)</p>
     </Modal>
   );
@@ -144,11 +144,11 @@ export function DeployView({ project: p, update, now }: { project: Project; upda
             </p>
             <div className="flex gap-2">
               {!d.liveKey && (
-                <button type="button" onClick={() => setKeyOpen(true)} className={btnPrimary}>
+                <button type="button" data-tour="deploy-key" onClick={() => setKeyOpen(true)} className={btnPrimary}>
                   Add the Live key
                 </button>
               )}
-              <button type="button" onClick={deploy} className={d.liveKey ? btnPrimary : btnOutline}>
+              <button type="button" data-tour="deploy-retry" onClick={deploy} className={d.liveKey ? btnPrimary : btnOutline}>
                 Try again
               </button>
             </div>
@@ -365,7 +365,7 @@ export function DeployView({ project: p, update, now }: { project: Project; upda
           <Steps p={p} now={now} />
           <p className="border-t border-line pt-3 text-xs text-ink-2">It only says Live once the live link works. If it doesn’t, your previous version stays live.</p>
           {!deploying && (
-            <button type="button" onClick={deploy} className={btnPrimary}>
+            <button type="button" data-tour="deploy-go" onClick={deploy} className={btnPrimary}>
               Go live
             </button>
           )}

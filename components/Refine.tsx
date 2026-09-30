@@ -289,6 +289,7 @@ export function Refine({ idea }: { idea: string }) {
             <span className="hidden text-[13px] text-ink-2 sm:inline">Nothing is built until you approve the plan.</span>
             <button
               type="button"
+              data-tour="refine-confirm"
               onClick={confirm}
               disabled={busy}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-medium text-on-primary disabled:opacity-70 sm:w-auto"

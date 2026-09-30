@@ -8,6 +8,7 @@ import { YouCorner, ThemeButton, NameMenu, DevChip, CreditsLink } from "../YouCo
 import { BottomTabs, SheetRow } from "../BottomTabs";
 import { Sheet } from "../Sheet";
 import { useDismiss } from "../useDismiss";
+import { TourGuide } from "../TourGuide";
 import { DemoTourCard, DemoTourIcon, DemoTourButton } from "../DemoTour";
 import { JourneyBar, CurrentStage } from "./JourneyBar";
 import { PanelBody, needsCount } from "./Panel";
@@ -272,6 +273,7 @@ export function ProjectShell({ id, children }: { id: string; children: React.Rea
         </div>
 
         <DemoTourButton className="fixed bottom-[72px] left-4 z-30 md:hidden" />
+        <TourGuide />
         <ChatButton count={count} onClick={openPanel} className="fixed right-4 bottom-[72px] z-30 h-11 rounded-full px-4 shadow-pop md:hidden" />
 
         <Sheet open={panelSheet} onClose={closePanel} label={count ? `Needs you (${count}) and chat` : "Chat"} tall>

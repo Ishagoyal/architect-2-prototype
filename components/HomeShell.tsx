@@ -8,6 +8,7 @@ import { YouCorner, ThemeButton, NameMenu, DevChip, CreditsLink } from "./YouCor
 import { BottomTabs, SheetRow } from "./BottomTabs";
 import { Sheet } from "./Sheet";
 import { WorkspaceMenu } from "./WorkspaceMenu";
+import { TourGuide } from "./TourGuide";
 import { DemoTourCard, DemoTourButton } from "./DemoTour";
 import { useCreditsUsed } from "@/lib/credits";
 
@@ -93,6 +94,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <DemoTourButton className="fixed bottom-[72px] left-4 z-30 md:hidden" />
+      <TourGuide />
       <BottomTabs
         label="Main"
         tabs={[

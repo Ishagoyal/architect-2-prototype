@@ -134,6 +134,7 @@ export function SetupView({ project: p, update }: { project: Project; update: Up
               </p>
               <button
                 type="button"
+                data-tour="setup-continue"
                 onClick={() => {
                   update((q) => ({
                     ...q,
