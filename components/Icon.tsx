@@ -35,6 +35,8 @@ const paths = {
   phone: <><rect x="7" y="3" width="10" height="18" rx="2" /><path d="M11 17.5 H13" /></>,
   select: <path d="M5 3 L19 12 L12 13.5 L9 20 Z" />,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 20 C5 16 8.5 14.5 12 14.5 C15.5 14.5 19 16 20 20" /></>,
+  map: <><path d="M9 4 L3 6 V20 L9 18 L15 20 L21 18 V4 L15 6 Z" /><path d="M9 4 V18" /><path d="M15 6 V20" /></>,
+  people: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20 C3.3 16.5 5.9 15 9 15 C12.1 15 14.7 16.5 15.5 20" /><path d="M15.5 4.8 A3.5 3.5 0 0 1 15.5 11.2" /><path d="M18 15.3 C20 16 21.2 17.6 21.5 20" /></>,
   logo: <><path d="M4 20 L12 4 L20 20" /><path d="M8 13 H16" /></>,
 } as const;
 

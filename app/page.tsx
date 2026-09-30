@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { AuthScreen } from "@/components/AuthScreen";
 
-// Step 2 puts sign up and "Try the demo" here.
-export default function Start() {
-  redirect("/home");
+export default function SignUp() {
+  return <AuthScreen mode="sign-up" />;
 }

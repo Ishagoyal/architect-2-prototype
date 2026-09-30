@@ -5,14 +5,14 @@ import { useState } from "react";
 import { Icon } from "./Icon";
 
 /* The big "Describe your app" box on Home. Sending it opens Refine (step 3 of the build plan). */
-export function PromptBox({ ideas }: { ideas: string[] }) {
+export function PromptBox({ heading, ideas }: { heading: string; ideas: string[] }) {
   const [text, setText] = useState("");
   const empty = text.trim() === "";
   return (
     <>
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="mt-8 flex flex-col gap-4 rounded-[18px] border border-line-strong bg-panel p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]"
+        className="mt-7 flex flex-col gap-4 rounded-[18px] border border-line-strong bg-panel p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]"
       >
         <textarea
           aria-label="Describe your app"
@@ -60,19 +60,19 @@ export function PromptBox({ ideas }: { ideas: string[] }) {
         </div>
       </form>
 
-      <div className="mt-11 flex items-center justify-between text-[13px]">
-        <span className="text-ink-2">Ideas for product managers</span>
+      <div className="mt-8 flex items-center justify-between text-[13px]">
+        <span className="text-ink-2">{heading}</span>
         <Link href="/explore" className="font-medium text-accent hover:text-accent-strong">
           Browse templates →
         </Link>
       </div>
-      <div className="mt-3 flex flex-col items-start gap-2.5">
+      <div className="mt-3 flex flex-col items-start gap-2">
         {ideas.map((idea) => (
           <button
             key={idea}
             type="button"
             onClick={() => setText(idea)}
-            className="rounded-full border border-line-strong bg-panel px-4 py-3 text-left text-sm hover:border-ink-3"
+            className="rounded-full border border-line-strong bg-panel px-4 py-[11px] text-left text-sm hover:border-ink-3"
           >
             {idea}
           </button>

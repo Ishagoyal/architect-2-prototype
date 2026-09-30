@@ -10,6 +10,7 @@ import { Sheet } from "../Sheet";
 import { JourneyBar, CurrentStage } from "./JourneyBar";
 import { PanelBody, type NeedsItem } from "./Panel";
 import type { Project } from "@/lib/demo";
+import { DemoTourCard, DemoTourIcon, DemoTourButton } from "../DemoTour";
 
 /* Inside a project:
    ≥1280px  top bar + full left rail + main + Needs you/chat panel (380px)
@@ -181,9 +182,11 @@ export function ProjectShell({
           })}
           <div className="flex-1" />
           <div className="hidden xl:block">
+            <DemoTourCard autoOpenMedia="(min-width: 1280px)" />
             <YouCorner settingsHref={`${base}/settings`} settingsLabel="Project settings" creditsUsed={project.creditsUsed} />
           </div>
           <div className="xl:hidden">
+            <DemoTourIcon autoOpenMedia="(min-width: 768px) and (max-width: 1279px)" />
             <YouCorner
               compact
               settingsHref={`${base}/settings`}
@@ -203,6 +206,8 @@ export function ProjectShell({
           <PanelBody projectId={project.id} needs={needs} />
         </aside>
       </div>
+
+      <DemoTourButton className="fixed bottom-[72px] left-4 z-30 md:hidden" />
 
       {/* Phone: open Needs you + chat */}
       <ChatButton
