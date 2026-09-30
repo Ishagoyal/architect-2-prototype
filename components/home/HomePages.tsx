@@ -11,6 +11,7 @@ import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { usePrefs, type ThemeChoice } from "@/lib/prefs";
 import { useViewer } from "@/lib/viewer-context";
+import { AddOnTip } from "../AddOnTip";
 
 const page = "mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-4 pt-8 pb-24 md:px-8 md:pt-10 md:pb-10";
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
@@ -168,7 +169,7 @@ export function UsagePage() {
           <span className="text-lg font-semibold">Limits</span>
           <div className="flex justify-between text-sm">Monthly spending limit <strong className="font-semibold">₹1,500</strong></div>
           <div className="flex justify-between text-sm">Alert me at <strong className="font-semibold">80%</strong></div>
-          <div className="flex items-center justify-between text-sm text-ink-2">Limit per project <span className="rounded-full bg-sunken px-2 py-0.5 text-xs">Developer add-on</span></div>
+          <AddOnTip label="Limit per project" className="text-sm text-ink-2" />
           <span className="flex gap-2"><button type="button" className={btnPrimary}>Top up</button><button type="button" className={btnOutline}>Change limit</button></span>
         </div>
       </div>

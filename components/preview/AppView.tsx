@@ -624,7 +624,7 @@ export function AppView({ project: p, update, now, initialPage = 0 }: { project:
         }
       >
         <p>
-          {p.stepsDone > 0 ? `Steps 1–${p.stepsDone} are finished and saved. ` : ""}
+          {p.stepsDone > 0 ? `${p.stepsDone === 1 ? "Step 1 is" : `Steps 1–${p.stepsDone} are`} finished and saved. ` : ""}
           <strong>
             Step {p.build.step + 1} ({lowerFirst(p.plan.steps[p.build.step]?.title ?? "")}) stops here
           </strong>{" "}
