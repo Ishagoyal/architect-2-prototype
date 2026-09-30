@@ -9,6 +9,7 @@ import { BottomTabs, SheetRow } from "./BottomTabs";
 import { Sheet } from "./Sheet";
 import { WorkspaceMenu } from "./WorkspaceMenu";
 import { TourGuide } from "./TourGuide";
+import { DemoStrip } from "./DemoStrip";
 import { DemoTourCard, DemoTourButton } from "./DemoTour";
 import { useCreditsUsed } from "@/lib/credits";
 
@@ -46,7 +47,9 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
   const moreActive = ["/help", "/usage", "/settings"].some(isActive);
 
   return (
-    <div className="flex min-h-dvh md:h-dvh">
+    <div className="flex min-h-dvh flex-col md:h-dvh">
+      <DemoStrip />
+      <div className="flex min-h-0 flex-1">
       {/* Desktop and tablet sidebar */}
       <nav
         aria-label="Main"
@@ -115,6 +118,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
           </SheetRow>
         </div>
       </Sheet>
+      </div>
     </div>
   );
 }
