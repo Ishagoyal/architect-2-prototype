@@ -62,6 +62,8 @@ export type Version = {
   files: string[];
   badge?: "live" | "stopped";
   pinned?: boolean;
+  /** What the project looked like at this version, so "Go back" can restore it. */
+  snap?: { plan: Plan; stepsDone: number };
 };
 
 export type ChatItem =
@@ -72,7 +74,8 @@ export type ChatItem =
   | { id: string; type: "fold"; text: string };
 
 export type Build = {
-  status: "idle" | "running" | "stopped" | "checking" | "done";
+  /** "waiting": Review is on, and a finished step waits for approval before the next one. */
+  status: "idle" | "running" | "waiting" | "stopped" | "checking" | "done";
   /** Index of the step being built. */
   step: number;
   since: number;
@@ -115,6 +118,8 @@ export type Project = {
   automationFixed?: boolean;
   /** Review changes (design S6). */
   reviewOn?: boolean;
+  /** Saved changes to an agent (design C1), by agent key. */
+  agentEdits?: Record<string, { does: string; never: string; tools: boolean[] }>;
   /** GitHub (designs D1–D5). */
   github?: { repo: string; own: boolean; behind: number; clash: boolean };
   createdAt: number;
@@ -684,6 +689,7 @@ export function createProject(input: RefineInput, now = Date.now()): Project {
         checks: [],
         cost: "Less than 1% of this month’s credits",
         files: ["plan.md"],
+        snap: { plan: meal ? { ...plan, what: input.what || plan.what } : plan, stepsDone: 0 },
       },
     ],
     chat: [
@@ -730,19 +736,22 @@ function stepDone(p: Project, at: number): Project {
     checks: step.checks.map((c) => [c, "not run", "passed"]),
     cost: `${used}% of this month’s credits`,
     files: step.files,
+    snap: { plan: p.plan, stepsDone: i + 1 },
   };
+  const wait = !!next && !!p.reviewOn;
   const chat: ChatItem[] = [
     { id: uid(), type: "step", title: `Step ${i + 1} done: ${step.title}`, detail: `${step.checks.length} of ${step.checks.length} checks passed · used ${used}% of this month’s credits` },
     { id: uid(), type: "version", n, text: `saved · ${step.title} added` },
   ];
-  if (next) chat.push({ id: uid(), type: "ai", text: `Now building step ${i + 2}: ${lowerFirst(next.title)}.` });
+  if (next && wait) chat.push({ id: uid(), type: "ai", text: `Step ${i + 1} is ready. Review is on, so I’ll wait for you before step ${i + 2} (${lowerFirst(next.title)}).` });
+  else if (next) chat.push({ id: uid(), type: "ai", text: `Now building step ${i + 2}: ${lowerFirst(next.title)}.` });
   return {
     ...p,
     stepsDone: i + 1,
     creditsUsed: p.creditsUsed + used,
     versions: [version, ...p.versions],
     chat: [...p.chat, ...chat],
-    build: next ? { status: "running", step: i + 1, since: at } : { status: "checking", step: i, since: at },
+    build: next ? { status: wait ? "waiting" : "running", step: i + 1, since: at } : { status: "checking", step: i, since: at },
     stage: next ? "build" : "test",
     updatedAt: at,
   };
@@ -875,6 +884,7 @@ export function stopBuild(p: Project, now = Date.now()): Project {
         cost: "1% of this month’s credits",
         files: step.files.slice(0, 1),
         badge: "stopped",
+        snap: { plan: p.plan, stepsDone: p.stepsDone },
       },
       ...p.versions,
     ],
@@ -887,13 +897,48 @@ export function goBackTo(p: Project, n: number, now = Date.now()): Project {
   const to = p.versions.find((v) => v.n === n);
   if (!to) return p;
   const next = p.versions[0].n + 1;
+  // Older saved versions have no snapshot: work out the steps from the title ("Step 2: …").
+  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone) };
+  const done = Math.min(snap.stepsDone, snap.plan.steps.length);
+  const complete = done >= snap.plan.steps.length;
+  const build: Build = complete
+    ? { status: "done", step: done - 1, since: now }
+    : done === 0
+      ? { status: "idle", step: 0, since: now }
+      : { status: "stopped", step: done, since: now };
   return {
     ...p,
+    plan: snap.plan,
+    stepsDone: done,
+    build,
+    stage: complete ? "test" : done === 0 ? "plan" : "build",
+    suggestion: null,
     versions: [
-      { n: next, title: `Went back to v${n}`, at: now, summary: `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`, parts: ["Plan", "Code", "App’s AI"], checks: [], cost: "No credits", files: to.files },
+      {
+        n: next,
+        title: `Went back to v${n}`,
+        at: now,
+        summary: `A copy of v${n} (${lowerFirst(to.title)}). The plan, the code and the app’s AI went back. Your app’s data stayed.`,
+        parts: ["Plan", "Code", "App’s AI"],
+        checks: [],
+        cost: "No credits",
+        files: to.files,
+        snap: { plan: snap.plan, stepsDone: done },
+      },
       ...p.versions,
     ],
     chat: [...p.chat, { id: uid(), type: "version", n: next, text: `saved · went back to v${n}` }],
+    updatedAt: now,
+  };
+}
+
+/** Review is on and a finished step is waiting: carry on with the next one. */
+export function continueBuild(p: Project, now = Date.now()): Project {
+  if (p.build.status !== "waiting") return p;
+  return {
+    ...p,
+    build: { status: "running", step: p.build.step, since: now },
+    chat: [...p.chat, { id: uid(), type: "ai", text: `Approved. Now building step ${p.build.step + 1}: ${lowerFirst(p.plan.steps[p.build.step].title)}.` }],
     updatedAt: now,
   };
 }

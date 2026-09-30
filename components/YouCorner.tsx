@@ -81,8 +81,8 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
       {open && (
         <div
           role="menu"
-          className={`absolute left-0 z-50 w-64 rounded-xl border border-line bg-panel p-1.5 shadow-pop ${
-            placement === "up" ? "bottom-full mb-2" : "top-full mt-2"
+          className={`absolute z-50 w-64 max-w-[calc(100vw-32px)] rounded-xl border border-line bg-panel p-1.5 shadow-pop ${
+            placement === "up" ? "bottom-full left-0 mb-2" : "top-full right-0 mt-2"
           }`}
         >
           <button

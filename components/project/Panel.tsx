@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "../Icon";
 import { useDismiss } from "../useDismiss";
 import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } from "@/lib/chat";
-import { lowerFirst, planTotals, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
+import { continueBuild, lowerFirst, planTotals, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
@@ -47,6 +47,18 @@ function useNeeds(project: Project, update: (fn: (p: Project) => Project) => voi
         { label: "Reject", onClick: () => update(reject) },
       ],
     });
+  if (project.build.status === "waiting") {
+    const done = project.plan.steps[project.stepsDone - 1];
+    needs.push({
+      id: "waiting",
+      title: `Step ${project.stepsDone} (${lowerFirst(done.title)}) is ready`,
+      lines: [`All ${done.checks.length} checks passed · review is on, so step ${project.stepsDone + 1} waits for you`],
+      actions: [
+        { label: "Continue", primary: true, onClick: () => update((p) => continueBuild(p)) },
+        { label: "What changed", href: `${base}/versions?v=${project.versions[0].n}` },
+      ],
+    });
+  }
   if (project.build.status === "stopped") {
     const i = project.build.step;
     needs.push({
@@ -143,7 +155,7 @@ export function needsCount(project: Project) {
   if (project.imported && project.imported.setup !== "done") n++;
   if (project.github && (project.github.clash || project.github.behind > 0)) n++;
   if (project.suggestion) n++;
-  if (project.build.status === "stopped") n++;
+  if (project.build.status === "stopped" || project.build.status === "waiting") n++;
   if (project.deploy?.status === "failed") n++;
   if (project.build.status === "done" && project.stage === "test" && !project.deploy?.liveVersion && project.deploy?.status !== "failed") n++;
   return Math.min(n, 2);

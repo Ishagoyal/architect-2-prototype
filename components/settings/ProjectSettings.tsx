@@ -437,8 +437,8 @@ function DangerTab({ project: p }: { project: Project }) {
             <button
               type="button"
               onClick={() => {
+                remove(p.id);
                 router.push("/home");
-                setTimeout(() => remove(p.id), 50);
               }}
               className="flex h-10 items-center rounded-[10px] bg-bad px-4 text-[13px] font-medium text-white"
             >
@@ -456,12 +456,10 @@ function DangerTab({ project: p }: { project: Project }) {
 export function ProjectSettings({ project, update }: { project: Project; update: Update }) {
   const params = useSearchParams();
   const router = useRouter();
-  const initial = (params.get("tab") as Tab) || "general";
-  const [tab, setTab] = useState<Tab>(tabs.some((t) => t.key === initial) ? initial : "general");
-  const go = (t: Tab) => {
-    setTab(t);
-    router.replace(`/p/${project.id}/settings?tab=${t}`, { scroll: false });
-  };
+  // The tab follows the address, so links like the top bar's "Review" (…?tab=team) always open the right one.
+  const asked = params.get("tab") as Tab | null;
+  const tab: Tab = asked && tabs.some((t) => t.key === asked) ? asked : "general";
+  const go = (t: Tab) => router.replace(`/p/${project.id}/settings?tab=${t}`, { scroll: false });
   return (
     <div className="flex flex-col">
       <div className="flex min-h-12 items-center gap-3 border-b border-line bg-panel px-4 text-[13px] md:px-5">

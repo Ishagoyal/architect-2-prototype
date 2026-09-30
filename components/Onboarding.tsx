@@ -14,6 +14,7 @@ export function Onboarding({ suggestedName, viaGithub }: { suggestedName: string
   const [picked, setPicked] = useState<string | null>(null);
   const [custom, setCustom] = useState("");
   const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const { setDevView } = usePrefs();
 
   const submit = (skip: boolean) => {
@@ -22,7 +23,11 @@ export function Onboarding({ suggestedName, viaGithub }: { suggestedName: string
     const form = new FormData();
     form.set("name", name);
     form.set("role", role);
-    start(() => saveOnboarding(form));
+    setError(null);
+    start(async () => {
+      const result = await saveOnboarding(form);
+      if (result?.error) setError(result.error);
+    });
   };
 
   return (
@@ -98,6 +103,11 @@ export function Onboarding({ suggestedName, viaGithub }: { suggestedName: string
           </p>
         </div>
 
+        {error && (
+          <p role="alert" className="rounded-[10px] bg-bad-soft px-3 py-2.5 text-[13px] text-bad">
+            {error}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <button type="button" onClick={() => submit(true)} disabled={pending} className="text-sm text-ink-2 hover:text-ink">
             Skip for now

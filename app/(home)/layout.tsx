@@ -7,7 +7,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   const viewer = await requireViewer();
   return (
     <ViewerProvider viewer={viewer}>
-      <ProjectsProvider kind={viewer.kind}>
+      <ProjectsProvider kind={viewer.kind} owner={viewer.id}>
         <HomeShell>{children}</HomeShell>
       </ProjectsProvider>
     </ViewerProvider>

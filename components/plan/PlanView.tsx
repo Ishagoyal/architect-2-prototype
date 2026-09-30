@@ -449,7 +449,23 @@ function FullPlan({
           </div>
         </Section>
 
-        {project.stage === "plan" && !editing && (project.imported?.setup === "plan" ? <LooksRight update={update} /> : <ReadyCard project={project} update={update} t={t} />)}
+        {project.stage === "plan" &&
+          !editing &&
+          (project.imported?.setup === "keys" ? (
+            <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-line bg-panel p-5 sm:flex-row sm:items-center">
+              <span className="flex flex-col gap-1">
+                <strong className="text-[15px] font-semibold">Add the missing keys first</strong>
+                <span className="text-[13px] text-ink-2">2 keys are missing, so the app can’t fully start. Building waits until they’re added.</span>
+              </span>
+              <Link href={`/p/${project.id}/setup`} className={btnPrimary}>
+                Continue setup
+              </Link>
+            </div>
+          ) : project.imported?.setup === "plan" ? (
+            <LooksRight update={update} />
+          ) : (
+            <ReadyCard project={project} update={update} t={t} />
+          ))}
       </article>
     </div>
   );
@@ -829,7 +845,11 @@ export function PlanView({ project, update }: { project: Project; update: Update
                 </button>
               )}
               <DownloadMenu project={project} />
-              {project.stage === "plan" ? (
+              {project.imported?.setup === "keys" ? (
+                <Link href={`/p/${project.id}/setup`} className={btnPrimary}>
+                  Add keys first
+                </Link>
+              ) : project.stage === "plan" ? (
                 <button type="button" onClick={confirm} className={btnPrimary}>
                   <span className="sm:hidden">Build</span>
                   <span className="hidden sm:inline">Confirm plan and build</span>

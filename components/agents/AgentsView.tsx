@@ -26,6 +26,13 @@ type Agent = {
 };
 
 function agentsFor(p: Project): Agent[] {
+  return baseAgents(p).map((a) => {
+    const e = p.agentEdits?.[a.key];
+    return e ? { ...a, does: e.does, never: e.never, tools: a.tools.map((t, i) => ({ ...t, on: e.tools[i] ?? t.on })) } : a;
+  });
+}
+
+function baseAgents(p: Project): Agent[] {
   if (p.imported)
     return [
       {
@@ -162,6 +169,7 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
                   const n = q.versions[0].n + 1;
                   return {
                     ...q,
+                    agentEdits: { ...q.agentEdits, [agent.key]: { does, never, tools: tools.map((t) => t.on) } },
                     versions: [{ n, title: `${agent.name} changed`, at: Date.now(), summary: `What ${agent.name.toLowerCase()} does, what it must never do and what it can use were changed.`, parts: ["App’s AI"], checks: [], cost: "No credits", files: [`${agent.where}SOUL.md`, `${agent.where}RULES.md`] }, ...q.versions],
                     chat: [...q.chat, { id: uid(), type: "version", n, text: `saved · ${agent.name} changed` }],
                   };

@@ -28,9 +28,9 @@ export function demoSeeds(now = Date.now()): Project[] {
     answer: "Only today",
     build: { status: "running", step: 2, since: now - 1500 },
     versions: [
-      { n: 11, title: "Step 2: login", at: now - 6 * MIN, summary: "Sign-in by email, and invites for the rest of the family.", parts: ["Plan", "Code · 2 files"], checks: [["A family member can sign in", "not run", "passed"], ["Someone outside the family can’t see the kitchen", "not run", "passed"]], cost: "1% of this month’s credits", files: ["app/login/page.tsx", "lib/auth.ts"] },
-      { n: 10, title: "Step 1: kitchen data", at: now - 12 * MIN, summary: "The place your app keeps households, kitchen items and meals, with a few examples.", parts: ["Plan", "Code · 2 files"], checks: [["Saves a kitchen item", "not run", "passed"], ["Keeps each family’s data separate", "not run", "passed"]], cost: "1% of this month’s credits", files: ["db/schema.ts", "db/seed.ts"] },
-      { n: 9, title: "Plan confirmed", at: now - 15 * MIN, summary: "The plan for Abhi Kya Banega: 5 steps and 15 checks.", parts: ["Plan"], checks: [], cost: "Less than 1% of this month’s credits", files: ["plan.md"], pinned: true },
+      { n: 11, title: "Step 2: login", at: now - 6 * MIN, summary: "Sign-in by email, and invites for the rest of the family.", parts: ["Plan", "Code · 2 files"], checks: [["A family member can sign in", "not run", "passed"], ["Someone outside the family can’t see the kitchen", "not run", "passed"]], cost: "1% of this month’s credits", files: ["app/login/page.tsx", "lib/auth.ts"], snap: { plan: meal.plan, stepsDone: 2 } },
+      { n: 10, title: "Step 1: kitchen data", at: now - 12 * MIN, summary: "The place your app keeps households, kitchen items and meals, with a few examples.", parts: ["Plan", "Code · 2 files"], checks: [["Saves a kitchen item", "not run", "passed"], ["Keeps each family’s data separate", "not run", "passed"]], cost: "1% of this month’s credits", files: ["db/schema.ts", "db/seed.ts"], snap: { plan: meal.plan, stepsDone: 1 } },
+      { n: 9, title: "Plan confirmed", at: now - 15 * MIN, summary: "The plan for Abhi Kya Banega: 5 steps and 15 checks.", parts: ["Plan"], checks: [], cost: "Less than 1% of this month’s credits", files: ["plan.md"], pinned: true, snap: { plan: meal.plan, stepsDone: 0 } },
     ],
     chat: [
       { id: "s1", type: "fold", text: "Steps 1–2 done ✓ · 14 messages" },

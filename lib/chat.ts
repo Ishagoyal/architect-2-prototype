@@ -48,8 +48,15 @@ export function accept(p: Project): Project {
     suggestion: null,
     chat: [...p.chat, { id: uid(), type: "ai", text: `Accepted. Step ${added} (${lowerFirst(p.suggestion.step.title)}) is in the plan now: ${t.steps} steps and ${t.checks} checks.` }],
   };
-  // Already built? Build just the new step.
-  if (q.build.status === "done" || q.build.status === "checking") q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  // A step that's already built changed: build again from that step.
+  const changed = p.suggestion.changeStep?.index;
+  if (changed !== undefined && changed < q.stepsDone) {
+    q = { ...q, stepsDone: changed, chat: [...q.chat, { id: uid(), type: "ai", text: `Step ${changed + 1} changed, so I’ll build it again, then the new step.` }] };
+    if (q.build.status !== "idle") q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  } else if (q.build.status === "done" || q.build.status === "checking") {
+    // Already built? Build just the new step.
+    q = startBuild({ ...q, build: { ...q.build, status: "idle" } });
+  }
   return q;
 }
 

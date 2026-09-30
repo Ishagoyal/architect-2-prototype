@@ -21,26 +21,27 @@ type Ctx = {
 
 const ProjectsContext = createContext<Ctx | null>(null);
 
-const keyFor = (kind: "demo" | "account") => `architect.projects.${kind}`;
+/** One browser copy per person: "demo", or the signed-in account's id. */
+const keyFor = (owner: string) => `architect.projects.${owner === "demo" ? "demo" : `account.${owner}`}`;
 
-function readLocal(kind: "demo" | "account"): Project[] | null {
+function readLocal(owner: string): Project[] | null {
   try {
-    const raw = localStorage.getItem(keyFor(kind));
+    const raw = localStorage.getItem(keyFor(owner));
     return raw ? (JSON.parse(raw) as Project[]) : null;
   } catch {
     return null;
   }
 }
 
-function writeLocal(kind: "demo" | "account", list: Project[]) {
+function writeLocal(owner: string, list: Project[]) {
   try {
-    localStorage.setItem(keyFor(kind), JSON.stringify(list));
+    localStorage.setItem(keyFor(owner), JSON.stringify(list));
   } catch {
     /* storage full or blocked: this visit still works */
   }
 }
 
-export function ProjectsProvider({ kind, children }: { kind: "demo" | "account"; children: React.ReactNode }) {
+export function ProjectsProvider({ kind, owner, children }: { kind: "demo" | "account"; owner: string; children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -49,7 +50,7 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
   // Load
   useEffect(() => {
     let cancelled = false;
-    const local = readLocal(kind);
+    const local = readLocal(owner);
     const start = local ?? (kind === "demo" ? demoSeeds() : []);
     setProjects(start.map((p) => advance(p)));
     setLoaded(true);
@@ -79,12 +80,12 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
     return () => {
       cancelled = true;
     };
-  }, [kind]);
+  }, [kind, owner]);
 
   // Save
   useEffect(() => {
     if (!loaded) return;
-    writeLocal(kind, projects);
+    writeLocal(owner, projects);
     const supabase = kind === "account" ? getBrowserSupabase() : null;
     if (!supabase || dirty.current.size === 0) return;
     const ids = [...dirty.current];
@@ -98,7 +99,7 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
           .then(({ error }: { error: unknown }) => error && console.warn("Couldn't save to Supabase; kept in this browser.", error));
     }, 800);
     return () => clearTimeout(t);
-  }, [projects, loaded, kind]);
+  }, [projects, loaded, kind, owner]);
 
   // Tick: keep time labels fresh and move running builds forward.
   useEffect(() => {
@@ -127,21 +128,28 @@ export function ProjectsProvider({ kind, children }: { kind: "demo" | "account";
     setProjects((list) => list.map((p) => (p.id === id ? { ...fn(p), updatedAt: Date.now() } : p)));
   }, []);
 
-  const add = useCallback((p: Project) => {
-    dirty.current.add(p.id);
-    setProjects((list) => [p, ...list.filter((x) => x.id !== p.id)]);
-    // Write straight away so the next page finds it even before the save effect runs.
-    const list = readLocal(kind) ?? [];
-    writeLocal(kind, [p, ...list.filter((x) => x.id !== p.id)]);
-  }, [kind]);
+  const add = useCallback(
+    (p: Project) => {
+      setProjects((list) => [p, ...list.filter((x) => x.id !== p.id)]);
+      // Save straight away: the next page has its own provider, so nothing may be left pending here.
+      writeLocal(owner, [p, ...(readLocal(owner) ?? []).filter((x) => x.id !== p.id)]);
+      const supabase = kind === "account" ? getBrowserSupabase() : null;
+      supabase
+        ?.from("projects")
+        .upsert({ id: p.id, name: p.name, data: p, updated_at: new Date(p.updatedAt).toISOString() })
+        .then(({ error }: { error: unknown }) => error && console.warn("Couldn't save to Supabase; kept in this browser.", error));
+    },
+    [kind, owner],
+  );
 
   const remove = useCallback(
     (id: string) => {
       setProjects((list) => list.filter((p) => p.id !== id));
+      writeLocal(owner, (readLocal(owner) ?? []).filter((p) => p.id !== id));
       const supabase = kind === "account" ? getBrowserSupabase() : null;
       supabase?.from("projects").delete().eq("id", id).then(() => {});
     },
-    [kind],
+    [kind, owner],
   );
 
   const value = useMemo(() => ({ loaded, projects, now, update, add, remove }), [loaded, projects, now, update, add, remove]);
