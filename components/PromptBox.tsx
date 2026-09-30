@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { BuilderMenu } from "./project/Panel";
 import { ImportModal } from "./import/ImportModal";
@@ -19,6 +19,20 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
   const closePlus = useCallback(() => setPlus(false), []);
   const mic = useDictation(text, setText);
   const plusRef = useDismiss<HTMLDivElement>(plus, closePlus);
+  // "New project" (/home?new=1): put the cursor in the box and show where to start.
+  const box = useRef<HTMLTextAreaElement>(null);
+  const [pointing, setPointing] = useState(false);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("new") !== "1") return;
+    url.searchParams.delete("new");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    box.current?.focus();
+    box.current?.scrollIntoView({ block: "center" });
+    setPointing(true);
+    const t = setTimeout(() => setPointing(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
   // The demo tour opens the import straight away (/home?import=1).
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -38,7 +52,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
           e.preventDefault();
           go();
         }}
-        className="mt-7 flex flex-col gap-4 rounded-[18px] border border-line-strong bg-panel p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]"
+        className={`mt-7 flex flex-col gap-4 rounded-[18px] border bg-panel p-4 transition-shadow ${pointing ? "border-accent ring-4 ring-accent-soft" : "border-line-strong"} shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]`}
       >
         {chips.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -53,6 +67,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
           </div>
         )}
         <textarea
+          ref={box}
           aria-label="Describe your app"
           data-tour="prompt"
           value={text}

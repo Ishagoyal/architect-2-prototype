@@ -34,7 +34,7 @@ export function ProjectsPage() {
         <h1 className="font-serif text-[44px] leading-none">Projects</h1>
         <span className="flex gap-2">
           <button type="button" onClick={() => setImporting(true)} className={btnOutline}>Import from GitHub</button>
-          <Link href="/home" className={btnPrimary}>New project</Link>
+          <Link href="/home?new=1" className={btnPrimary}>New project</Link>
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -67,11 +67,19 @@ export function ProjectsPage() {
 /* A28 */
 export function AgentsHomePage() {
   const { projects } = useProjects();
-  const agents = projects.filter((p) => p.plan.ai).map((p) => ({ p, name: p.imported ? "Meal suggester" : p.plan.ai!.name, framework: p.imported ? "LangGraph" : "Lyzr" }));
+  const automations = projects.filter((p) => p.kind === "meal" && !p.imported);
+  const agents = projects.filter((p) => p.plan.ai).map((p) => ({ p, name: p.plan.ai!.name, framework: p.imported ? "LangGraph" : "Lyzr" }));
   return (
     <div className={page}>
       <h1 className="font-serif text-[44px] leading-none">Agents</h1>
       <p className="-mt-3 text-[15px] text-ink-2">Every agent in this workspace, and what runs on its own.</p>
+      {agents.length === 0 ? (
+        <div className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-panel p-6">
+          <span className="text-[15px] font-semibold">No agents yet</span>
+          <p className="text-sm text-ink-2">Agents are the AI inside your apps, like one that answers questions or sorts messages. Build an app that uses AI, and its agent shows up here.</p>
+          <Link href="/home?new=1" className={btnPrimary}>Describe an app</Link>
+        </div>
+      ) : (
       <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead>
@@ -96,9 +104,11 @@ export function AgentsHomePage() {
           </tbody>
         </table>
       </div>
+      )}
       <h2 className="text-lg font-semibold">Automations</h2>
       <div className="flex flex-col gap-2">
-        {projects.filter((p) => p.kind === "meal" && !p.imported).map((p) => (
+        {automations.length === 0 && <p className="text-sm text-ink-2">Nothing runs on its own yet. Automations, like a daily summary at 9 AM, show up here once an app has one.</p>}
+        {automations.map((p) => (
           <Link key={p.id} href={`/p/${p.id}/agents`} className="flex items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3">
             <span className="flex flex-col">
               <span className="text-sm font-medium">Every day 9 PM · {p.name}</span>
