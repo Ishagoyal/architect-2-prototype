@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Only scan the app's own code for class names, not the design exports. */
+@source not "../design";
+@source not "../docs";
+
+/* Theme and Developer view are set on <html> before the page paints
+   (see ThemeScript), so these variants never flash. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dev (&:where([data-dev="on"], [data-dev="on"] *));
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
+
+  --color-bg: var(--bg);
+  --color-rail: var(--rail);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-hover: var(--hover);
+  --color-sunken: var(--sunken);
+  --color-scrim: var(--scrim);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-ink-3: var(--text-3);
+
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-needs: var(--needs-bg);
+
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-dev: var(--dev);
+  --color-dev-soft: var(--dev-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-progress: var(--progress);
+  --color-todo: var(--todo);
+
+  --shadow-pop: var(--shadow);
+}
+
+/* Inside the base layer so Tailwind classes can override it. */
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Room for the phone's home indicator under the bottom tab bar. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

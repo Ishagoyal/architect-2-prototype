@@ -1,0 +1,83 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { Icon } from "./Icon";
+
+/* The big "Describe your app" box on Home. Sending it opens Refine (step 3 of the build plan). */
+export function PromptBox({ ideas }: { ideas: string[] }) {
+  const [text, setText] = useState("");
+  const empty = text.trim() === "";
+  return (
+    <>
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="mt-8 flex flex-col gap-4 rounded-[18px] border border-line-strong bg-panel p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:mt-9 md:p-[22px]"
+      >
+        <textarea
+          aria-label="Describe your app"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Describe your app — e.g. an agent that answers customer questions from our help docs"
+          rows={3}
+          className="min-h-[72px] resize-none border-0 bg-transparent p-0 text-base leading-normal outline-none placeholder:text-ink-3 md:text-[17px]"
+        />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Add files, import from GitHub or bring an agent"
+              className="flex size-10 items-center justify-center rounded-[10px] border border-line-strong bg-panel"
+            >
+              <Icon name="plus" size={16} strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              className="flex h-9 items-center gap-1.5 rounded-lg bg-accent-soft px-3 text-[13px] font-medium text-accent-strong"
+            >
+              <Icon name="sparkle" size={13} strokeWidth={2} />
+              Builder: Auto
+              <Icon name="chevronDown" size={12} strokeWidth={2} />
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Speak instead of typing"
+              className="flex size-10 items-center justify-center rounded-[10px] border border-line-strong bg-panel"
+            >
+              <Icon name="mic" size={16} />
+            </button>
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={empty}
+              className="flex size-10 items-center justify-center rounded-[10px] bg-primary text-on-primary disabled:cursor-default disabled:bg-line-strong disabled:text-panel"
+            >
+              <Icon name="send" size={16} strokeWidth={2.2} />
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div className="mt-11 flex items-center justify-between text-[13px]">
+        <span className="text-ink-2">Ideas for product managers</span>
+        <Link href="/explore" className="font-medium text-accent hover:text-accent-strong">
+          Browse templates →
+        </Link>
+      </div>
+      <div className="mt-3 flex flex-col items-start gap-2.5">
+        {ideas.map((idea) => (
+          <button
+            key={idea}
+            type="button"
+            onClick={() => setText(idea)}
+            className="rounded-full border border-line-strong bg-panel px-4 py-3 text-left text-sm hover:border-ink-3"
+          >
+            {idea}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
