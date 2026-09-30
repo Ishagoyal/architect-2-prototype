@@ -166,6 +166,7 @@ export function needsCount(project: Project) {
   let n = 0;
   if (project.imported && project.imported.setup !== "done") n++;
   if (project.github && (project.github.clash || project.github.behind > 0)) n++;
+  if (project.checkChange?.status === "waiting") n++;
   if (project.suggestion) n++;
   if (project.build.status === "stopped" || project.build.status === "waiting") n++;
   if (project.deploy?.status === "failed") n++;

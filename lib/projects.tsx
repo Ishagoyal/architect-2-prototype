@@ -127,7 +127,7 @@ export function ProjectsProvider({
       setProjects((list) => {
         let changed = false;
         const next = list.map((p) => {
-          if (p.build.status !== "running" && p.build.status !== "checking" && p.deploy?.status !== "deploying") return p;
+          if (p.build.status !== "running" && p.build.status !== "checking" && p.deploy?.status !== "deploying" && !p.fix) return p;
           const q = advance(p, t);
           if (q !== p) {
             changed = true;

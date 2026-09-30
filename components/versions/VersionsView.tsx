@@ -20,15 +20,17 @@ function Broken({ p, v, update, goBack }: { p: Project; v: Version; update: Upda
   if (!check) return null;
   const back = undoTarget(p, v.n);
   return (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl bg-bad-soft px-3.5 py-3 text-[13px] text-bad">
-      <span>{v.fixing ? `Fixing “${check}” now. Follow it in chat.` : `This change may have broken “${check}”.`}</span>
+    <div role="alert" className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl px-3.5 py-3 text-[13px] ${v.fixedIn ? "bg-good-soft text-good" : "bg-bad-soft text-bad"}`}>
+      <span>
+        {v.fixedIn ? `This change broke “${check}”. Fixed in v${v.fixedIn}: every check passes again.` : v.fixing ? `Fixing “${check}” now. Follow it in chat.` : `This change may have broken “${check}”.`}
+      </span>
       <span className="flex items-center gap-3 font-semibold">
-        {!v.fixing && (
+        {!v.fixing && !v.fixedIn && (
           <button type="button" onClick={() => update((q) => fixBrokenCheck(q, v.n))} className="rounded-md hover:underline">
             Fix it
           </button>
         )}
-        {back && (
+        {back && !v.fixedIn && (
           <button type="button" onClick={() => goBack(back.n)} title={`Go back to v${back.n}, saved as a new version`} className="rounded-md hover:underline">
             Undo
           </button>

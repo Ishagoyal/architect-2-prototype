@@ -64,8 +64,10 @@ export type Version = {
   pinned?: boolean;
   /** "Fix it" was pressed for a check this version broke (design A22). */
   fixing?: boolean;
+  /** The version that fixed it. */
+  fixedIn?: number;
   /** What the project looked like at this version, so "Go back" can restore it. */
-  snap?: { plan: Plan; stepsDone: number };
+  snap?: { plan: Plan; stepsDone: number; agentEdits?: Project["agentEdits"] };
 };
 
 export type ChatItem =
@@ -128,6 +130,8 @@ export type Project = {
   github?: { repo: string; own: boolean; behind: number; clash: boolean };
   /** The AI wants to change a check's wording; it waits for the person (design A21). */
   checkChange?: CheckChange;
+  /** A broken check being fixed: version `n` broke `check` (design A22). */
+  fix?: { n: number; check: string; since: number };
   createdAt: number;
   updatedAt: number;
 };
@@ -763,7 +767,7 @@ function stepDone(p: Project, at: number): Project {
     checks: step.checks.map((c) => [c, "not run", "passed"]),
     cost: `${used}% of this month’s credits`,
     files: step.files,
-    snap: { plan: p.plan, stepsDone: i + 1 },
+    snap: { plan: p.plan, stepsDone: i + 1, agentEdits: p.agentEdits },
   };
   const wait = !!next && (!!p.reviewOn || !!p.stepByStep);
   const chat: ChatItem[] = [
@@ -810,6 +814,8 @@ export function advance(p: Project, now = Date.now()): Project {
         ],
         updatedAt: q.build.since + CHECK_MS,
       };
+    } else if (q.fix && now - q.fix.since >= STEP_MS) {
+      q = finishFix(q, q.fix.since + STEP_MS);
     } else if (q.deploy?.status === "deploying" && now - q.deploy.since >= DEPLOY_STEP_MS * (DEPLOY_STEPS - 1)) {
       q = finishDeploy(q, q.deploy.since + DEPLOY_STEP_MS * (DEPLOY_STEPS - 1));
     } else break;
@@ -918,7 +924,7 @@ export function stopBuild(p: Project, now = Date.now()): Project {
         cost: "1% of this month’s credits",
         files: step.files.slice(0, 1),
         badge: "stopped",
-        snap: { plan: p.plan, stepsDone: p.stepsDone },
+        snap: { plan: p.plan, stepsDone: p.stepsDone, agentEdits: p.agentEdits },
       },
       ...p.versions,
     ],
@@ -935,7 +941,7 @@ export function goBackTo(p: Project, n: number, now = Date.now(), only?: keyof t
   if (!to) return p;
   const next = p.versions[0].n + 1;
   // Older saved versions have no snapshot: work out the steps from the title ("Step 2: …").
-  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone) };
+  const snap = to.snap ?? { plan: p.plan, stepsDone: Number(/^Step (\d+):/.exec(to.title)?.[1] ?? p.stepsDone), agentEdits: p.agentEdits };
   const done = Math.min(snap.stepsDone, snap.plan.steps.length);
   const complete = done >= snap.plan.steps.length;
   const build: Build = complete
@@ -945,10 +951,21 @@ export function goBackTo(p: Project, n: number, now = Date.now(), only?: keyof t
       : { status: "stopped", step: done, since: now };
   // Only the plan or only the app's AI: what's built stays as it is.
   const keepBuild = only === "plan" || only === "ai";
-  const plan = only === "plan" ? (snap.plan.steps.length >= p.stepsDone ? snap.plan : p.plan) : only ? p.plan : snap.plan;
+  // The app's AI is the plan's AI section and the saved changes to its agents.
+  const plan =
+    only === "plan"
+      ? { ...(snap.plan.steps.length >= p.stepsDone ? snap.plan : p.plan), ai: p.plan.ai }
+      : only === "ai"
+        ? { ...p.plan, ai: snap.plan.ai }
+        : only === "code"
+          ? p.plan
+          : snap.plan;
+  const agentEdits = !only || only === "ai" ? snap.agentEdits : p.agentEdits;
   return {
     ...p,
     plan,
+    agentEdits,
+    fix: undefined,
     ...(keepBuild ? {} : { stepsDone: done, build, stage: complete ? ("test" as const) : done === 0 ? ("plan" as const) : ("build" as const) }),
     suggestion: null,
     versions: [
@@ -963,7 +980,7 @@ export function goBackTo(p: Project, n: number, now = Date.now(), only?: keyof t
         checks: [],
         cost: "No credits",
         files: to.files,
-        snap: { plan, stepsDone: keepBuild ? p.stepsDone : done },
+        snap: { plan, stepsDone: keepBuild ? p.stepsDone : done, agentEdits },
       },
       ...p.versions,
     ],
@@ -1013,8 +1030,10 @@ export function fixBrokenCheck(p: Project, n: number, now = Date.now()): Project
   const v = p.versions.find((x) => x.n === n);
   const check = v && brokenCheck(v);
   if (!v || !check) return p;
+  if (p.fix) return p;
   return {
     ...p,
+    fix: { n, check, since: now },
     versions: p.versions.map((x) => (x.n === n ? { ...x, fixing: true } : x)),
     chat: [
       ...p.chat,
@@ -1022,6 +1041,39 @@ export function fixBrokenCheck(p: Project, n: number, now = Date.now()): Project
       { id: uid(), type: "ai", text: `Fixing it: v${n} (${lowerFirst(v.title)}) broke “${check}”. I’ll change only what’s needed, run every check again and save it as a new version.` },
     ],
     updatedAt: now,
+  };
+}
+
+/** The fix is done: saved as a new version, with every check of the broken one passing again. */
+function finishFix(p: Project, at: number): Project {
+  const f = p.fix!;
+  const broke = p.versions.find((v) => v.n === f.n);
+  const n = p.versions[0].n + 1;
+  const checks: [string, string, string][] = (broke?.checks ?? [[f.check, "failed", "passed"]]).map(([name, , after]) => [name, after, "passed"]);
+  return {
+    ...p,
+    fix: undefined,
+    versions: [
+      {
+        n,
+        title: `Fixed “${f.check}”`,
+        at,
+        summary: `v${f.n} broke “${f.check}”. Changed only what was needed, then ran every check again: they all pass.`,
+        parts: ["Code · 1 file"],
+        checks,
+        cost: "1% of this month’s credits",
+        files: broke?.files.slice(0, 1) ?? [],
+        snap: { plan: p.plan, stepsDone: p.stepsDone, agentEdits: p.agentEdits },
+      },
+      ...p.versions.map((v) => (v.n === f.n ? { ...v, fixing: false, fixedIn: n } : v)),
+    ],
+    chat: [
+      ...p.chat,
+      { id: uid(), type: "step", title: `Fixed: ${f.check}`, detail: `${checks.length} of ${checks.length} checks passed · used 1% of this month’s credits` },
+      { id: uid(), type: "version", n, text: `saved · fixed “${f.check}”` },
+    ],
+    creditsUsed: p.creditsUsed + 1,
+    updatedAt: at,
   };
 }
 
