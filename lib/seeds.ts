@@ -1,11 +1,11 @@
-import { createProject, type Project } from "./model";
+import { createProject, lowerFirst, planTotals, usedFor, type Project, type Version } from "./model";
 
 /* The demo's ready-made projects. Times are relative to when the demo starts. */
 
 const MIN = 60_000;
 
 export function demoSeeds(now = Date.now()): Project[] {
-  // Abhi Kya Banega: mid-build, step 3 of 5 (design A11). The build carries on by itself.
+  // Abhi Kya Banega: fully built, every check passed, not live yet. Nothing moves until the reviewer clicks.
   const meal = createProject(
     {
       idea: "Build an app for Indian households with a cook. The family updates what's in the kitchen in Hinglish or with photos, and it suggests three meals we can make right now.",
@@ -17,29 +17,44 @@ export function demoSeeds(now = Date.now()): Project[] {
       theme: 0,
       withAI: true,
     },
-    now - 30 * MIN,
+    now - 3 * 60 * MIN,
   );
+  const steps = meal.plan.steps;
+  const stepVersions: Version[] = steps
+    .map((st, i) => ({
+      n: 10 + i,
+      title: `Step ${i + 1}: ${lowerFirst(st.title)}`,
+      at: now - (40 - i * 6) * MIN,
+      summary: st.builds,
+      parts: st.kind === "ai" ? ["Plan", `Code · ${st.files.length} files`, "App’s AI"] : ["Plan", `Code · ${st.files.length} files`],
+      checks: st.checks.map((c) => [c, "not run", "passed"] as [string, string, string]),
+      cost: `${usedFor(st)}% of this month’s credits`,
+      files: st.files,
+      snap: { plan: meal.plan, stepsDone: i + 1 },
+    }))
+    .reverse();
+  const total = planTotals(meal.plan);
+  const used = steps.reduce((sum, st) => sum + usedFor(st), 0);
   const abhi: Project = {
     ...meal,
     id: "abhi-kya-banega",
-    stage: "build",
-    stepsDone: 2,
-    creditsUsed: 2,
+    stage: "test",
+    stepsDone: steps.length,
+    creditsUsed: used,
     answer: "Only today",
-    build: { status: "running", step: 2, since: now - 1500 },
+    build: { status: "done", step: steps.length - 1, since: now - 10 * MIN },
     versions: [
-      { n: 11, title: "Step 2: login", at: now - 6 * MIN, summary: "Sign-in by email, and invites for the rest of the family.", parts: ["Plan", "Code · 2 files"], checks: [["A family member can sign in", "not run", "passed"], ["Someone outside the family can’t see the kitchen", "not run", "passed"]], cost: "1% of this month’s credits", files: ["app/login/page.tsx", "lib/auth.ts"], snap: { plan: meal.plan, stepsDone: 2 } },
-      { n: 10, title: "Step 1: kitchen data", at: now - 12 * MIN, summary: "The place your app keeps households, kitchen items and meals, with a few examples.", parts: ["Plan", "Code · 2 files"], checks: [["Saves a kitchen item", "not run", "passed"], ["Keeps each family’s data separate", "not run", "passed"]], cost: "1% of this month’s credits", files: ["db/schema.ts", "db/seed.ts"], snap: { plan: meal.plan, stepsDone: 1 } },
-      { n: 9, title: "Plan confirmed", at: now - 15 * MIN, summary: "The plan for Abhi Kya Banega: 5 steps and 15 checks.", parts: ["Plan"], checks: [], cost: "Less than 1% of this month’s credits", files: ["plan.md"], pinned: true, snap: { plan: meal.plan, stepsDone: 0 } },
+      ...stepVersions,
+      { n: 9, title: "Plan confirmed", at: now - 45 * MIN, summary: `The plan for Abhi Kya Banega: ${total.steps} steps and ${total.checks} checks.`, parts: ["Plan"], checks: [], cost: "Less than 1% of this month’s credits", files: ["plan.md"], pinned: true, snap: { plan: meal.plan, stepsDone: 0 } },
     ],
     chat: [
-      { id: "s1", type: "fold", text: "Steps 1–2 done ✓ · 14 messages" },
-      { id: "s2", type: "step", title: "Step 2 done: Login", detail: "2 of 2 checks passed · used 1% of this month’s credits" },
-      { id: "s3", type: "version", n: 11, text: "saved · Login added" },
-      { id: "s4", type: "ai", text: "Now building step 3: meal suggestions. I'm testing the app's AI with a sample kitchen." },
+      { id: "s1", type: "fold", text: `Steps 1–${steps.length} done ✓ · 31 messages` },
+      { id: "s2", type: "step", title: `All ${steps.length} steps built`, detail: `${total.checks} of ${total.checks} checks passed · used ${used}% of this month’s credits` },
+      { id: "s3", type: "version", n: 9 + steps.length, text: "saved · Screens added" },
+      { id: "s4", type: "ai", text: "Your app is built and every check passed. It isn’t live yet: go live when you’re ready." },
     ],
     createdAt: now - 3 * 60 * MIN,
-    updatedAt: now - 2 * MIN,
+    updatedAt: now - 10 * MIN,
   };
 
   const docs = createProject(
