@@ -20,8 +20,6 @@ const nav: { label: string; href: string; icon: IconName }[] = [
   { label: "Home", href: "/home", icon: "home" },
   { label: "Projects", href: "/projects", icon: "folder" },
   { label: "Agents", href: "/agents", icon: "agent" },
-  { label: "Explore", href: "/explore", icon: "explore" },
-  { label: "Help & Learn", href: "/help", icon: "help" },
 ];
 
 export function Logo() {
@@ -44,7 +42,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
   const [more, setMore] = useState(false);
   const closeMore = useCallback(() => setMore(false), []);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
-  const moreActive = ["/help", "/usage", "/settings"].some(isActive);
+  const moreActive = ["/usage", "/settings"].some(isActive);
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh">
@@ -101,15 +99,12 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
       <BottomTabs
         label="Main"
         tabs={[
-          ...nav.slice(0, 4).map((n) => ({ ...n, active: isActive(n.href) })),
+          ...nav.map((n) => ({ ...n, active: isActive(n.href) })),
           { label: "More", icon: "more" as const, onClick: () => setMore(true), active: moreActive },
         ]}
       />
       <Sheet open={more} onClose={closeMore} label="More">
         <div className="flex flex-col gap-0.5 px-2 pb-4">
-          <SheetRow href="/help" icon="help" onClick={closeMore}>
-            Help & Learn
-          </SheetRow>
           <div onClick={closeMore}>
             <CreditsLink used={creditsUsed} inSheet />
           </div>
