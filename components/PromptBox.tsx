@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "./Icon";
@@ -8,6 +7,7 @@ import { BuilderMenu } from "./project/Panel";
 import { ImportModal } from "./import/ImportModal";
 import { useDismiss } from "./useDismiss";
 import { useCallback, useEffect } from "react";
+import { useDictation } from "@/lib/useDictation";
 
 /* The big "Describe your app" box on Home. Sending it opens Refine (step 3 of the build plan). */
 export function PromptBox({ heading, ideas, initial = "" }: { heading: string; ideas: string[]; initial?: string }) {
@@ -17,6 +17,7 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
   const [importing, setImporting] = useState(false);
   const [chips, setChips] = useState<string[]>([]);
   const closePlus = useCallback(() => setPlus(false), []);
+  const mic = useDictation(text, setText);
   const plusRef = useDismiss<HTMLDivElement>(plus, closePlus);
   // The demo tour opens the import straight away (/home?import=1).
   useEffect(() => {
@@ -108,8 +109,10 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
           <div className="flex items-center gap-2">
             <button
               type="button"
-              aria-label="Speak instead of typing"
-              className="flex size-10 items-center justify-center rounded-[10px] border border-line-strong bg-panel"
+              aria-label={mic.listening ? "Stop listening" : "Speak instead of typing"}
+              aria-pressed={mic.listening}
+              onClick={mic.toggle}
+              className={`flex size-10 items-center justify-center rounded-[10px] border ${mic.listening ? "animate-pulse border-accent bg-accent-soft text-accent-strong" : "border-line-strong bg-panel"}`}
             >
               <Icon name="mic" size={16} />
             </button>
@@ -125,12 +128,14 @@ export function PromptBox({ heading, ideas, initial = "" }: { heading: string; i
           </div>
         </div>
       </form>
+      {(mic.listening || mic.note) && (
+        <p role="status" className={`mt-2 text-[13px] ${mic.note ? "text-bad" : "text-ink-2"}`}>
+          {mic.note ?? "Listening… speak your idea, then press the mic again to stop."}
+        </p>
+      )}
 
       <div className="mt-8 flex items-center justify-between text-[13px]">
         <span className="text-ink-2">{heading}</span>
-        <Link href="/explore" className="font-medium text-accent hover:text-accent-strong">
-          Browse templates →
-        </Link>
       </div>
       <div className="mt-3 flex flex-col items-start gap-2">
         {ideas.map((idea) => (

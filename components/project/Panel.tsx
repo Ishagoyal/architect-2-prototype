@@ -8,7 +8,8 @@ import { useDismiss } from "../useDismiss";
 import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } from "@/lib/chat";
 import { acceptCheckChange, continueBuild, lowerFirst, planTotals, rejectCheckChange, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
-import { AddOnTip } from "../AddOnTip";
+import { AddOnTip, ExactModelPicker } from "../AddOnTip";
+import { useAddOn } from "@/lib/addon";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
 
@@ -198,6 +199,14 @@ function FoldedLine({ children, dot = false }: { children: React.ReactNode; dot?
   );
 }
 
+/** With the Developer add-on: tokens for this step, worked out from its credit share (example numbers). */
+function StepTokens({ detail }: { detail: string }) {
+  const { addOn } = useAddOn();
+  const used = Number(detail.match(/used (\d+(?:\.\d+)?)%/)?.[1] ?? 0);
+  if (!addOn || !used) return null;
+  return <div className="text-xs text-ink-2">About {(used * 48_000).toLocaleString("en-US")} tokens · Developer add-on · example</div>;
+}
+
 const actionLabel = { "plan-first": "Plan it first", "build-now": "Build it now", "see-plan": "See the plan" } as const;
 
 function ChatLine({ item, project, onAction }: { item: ChatItem; project: Project; onAction: (a: keyof typeof actionLabel) => void }) {
@@ -217,6 +226,7 @@ function ChatLine({ item, project, onAction }: { item: ChatItem; project: Projec
             {item.title}
           </div>
           <div className="text-xs text-ink-2">{item.detail}</div>
+          <StepTokens detail={item.detail} />
         </div>
       );
     case "version":
@@ -414,7 +424,7 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
               </button>
             ))}
           </div>
-          <AddOnTip label="Pick an exact model" className="mt-3 border-t border-line pt-3 text-[13px] text-ink-2" />
+          <AddOnTip label="Pick an exact model" unlocked={<ExactModelPicker />} className="mt-3 border-t border-line pt-3 text-[13px] text-ink-2" />
         </div>
       )}
     </div>

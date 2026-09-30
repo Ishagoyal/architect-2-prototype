@@ -25,6 +25,10 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
   const [picked, setPicked] = useState<string[]>(["OrderBook"]);
   const [source, setSource] = useState<"GitHub" | "ZIP file" | "Lovable, Bolt, v0…">("GitHub");
   const [repo, setRepo] = useState("OrderBook");
+  // "Public repo? Paste a URL instead": import from a link rather than the connected repos.
+  const [byUrl, setByUrl] = useState(false);
+  const [url, setUrl] = useState("");
+  const fromUrl = url.trim().match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i);
 
   useEffect(() => {
     if (!open) return;
@@ -50,7 +54,8 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
     if (!picked.includes(repo)) setRepo(picked[0] ?? repos[0]);
   };
   const doImport = () => {
-    const p = { ...importedProject(`${handle}/${repo}`), reviewOn: viewer.kind === "demo" };
+    const source = byUrl && fromUrl ? `${fromUrl[1]}/${fromUrl[2]}` : `${handle}/${repo}`;
+    const p = { ...importedProject(source), reviewOn: viewer.kind === "demo" };
     add(p);
     // Developer view turns on after an import (PRODUCT.md), but not in the watch-only demo.
     if (viewer.kind !== "demo") setDevView(true);
@@ -134,6 +139,21 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
                       Switch account
                     </button>
                   </div>
+                  {byUrl ? (
+                    <label className="flex flex-col gap-1.5 text-sm">
+                      Link to a public repo
+                      <input
+                        autoFocus
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://github.com/owner/repo"
+                        className="h-12 rounded-xl border border-line-strong bg-raised px-3 text-[15px] placeholder:text-ink-3"
+                      />
+                      <span className="text-xs text-ink-2">
+                        {url.trim() && !fromUrl ? "That doesn’t look like a GitHub repo link. It should look like github.com/owner/repo." : "This is a prototype: any link imports the sample app, OrderBook."}
+                      </span>
+                    </label>
+                  ) : (
                   <label className="flex flex-col gap-1.5 text-sm">
                     Repository
                     <select value={repo} onChange={(e) => setRepo(e.target.value)} className="h-12 rounded-xl border border-line-strong bg-raised px-3 text-[15px]">
@@ -144,6 +164,7 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
                       ))}
                     </select>
                   </label>
+                  )}
                   <div className="grid grid-cols-2 gap-3">
                     <label className="flex flex-col gap-1.5 text-sm">
                       Branch
@@ -189,13 +210,19 @@ export function ImportModal({ open, onClose }: { open: boolean; onClose: () => v
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-line px-6 py-4">
-          <span className="text-[13px] text-accent">{connected ? "Public repo? Paste a URL instead" : ""}</span>
+          <span>
+            {connected && source === "GitHub" && (
+              <button type="button" onClick={() => setByUrl((b) => !b)} className="text-left text-[13px] text-accent">
+                {byUrl ? "Pick from your repos instead" : "Public repo? Paste a URL instead"}
+              </button>
+            )}
+          </span>
           <span className="flex gap-2">
             <button type="button" onClick={onClose} className={btnOutline}>
               Cancel
             </button>
             {connected ? (
-              <button type="button" data-tour="import-go" disabled={source !== "GitHub"} onClick={doImport} className={btnPrimary}>
+              <button type="button" data-tour="import-go" disabled={source !== "GitHub" || (byUrl && !fromUrl)} onClick={doImport} className={btnPrimary}>
                 Import project
               </button>
             ) : (

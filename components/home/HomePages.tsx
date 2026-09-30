@@ -11,7 +11,8 @@ import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { usePrefs, type ThemeChoice } from "@/lib/prefs";
 import { useViewer } from "@/lib/viewer-context";
-import { AddOnTip } from "../AddOnTip";
+import { AddOnTip, ProjectLimitInput } from "../AddOnTip";
+import { useAddOn } from "@/lib/addon";
 
 const page = "mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-4 pt-8 pb-24 md:px-8 md:pt-10 md:pb-10";
 const card = "flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5";
@@ -136,6 +137,7 @@ export function UsagePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className={card}>
           <span className="text-lg font-semibold">By project</span>
+          {projects.length === 0 && <p className="text-sm text-ink-2">No projects yet.</p>}
           {projects.map((p) => (
             <div key={p.id} className="grid grid-cols-[1fr_1.4fr_auto] items-center gap-3 text-sm">
               <span className="truncate">{p.name}</span>
@@ -146,15 +148,20 @@ export function UsagePage() {
         </div>
         <div className={card}>
           <span className="text-lg font-semibold">Building vs your live apps</span>
-          <div className="flex h-2 overflow-hidden rounded-full"><span className="bg-accent" style={{ width: "66%" }} /><span className="bg-info" style={{ width: "34%" }} /></div>
+          {viewer.kind !== "demo" ? (
+            <p className="text-sm text-ink-2">Nothing to show yet. Once an app is live, this splits your credits between building and people using your apps.</p>
+          ) : (
+            <div className="flex h-2 overflow-hidden rounded-full"><span className="bg-accent" style={{ width: "66%" }} /><span className="bg-info" style={{ width: "34%" }} /></div>
+          )}
           <div className="flex justify-between text-[13px]">
             <span><strong className="font-semibold">Building</strong><span className="block text-xs text-ink-2">you, making changes</span></span>
             <span className="text-right"><strong className="font-semibold">Live apps</strong><span className="block text-xs text-ink-2">people using them + scheduled runs</span></span>
           </div>
         </div>
         <div className={card}>
-          <span className="flex justify-between text-lg font-semibold">Where your credits went <span className="text-xs font-normal text-ink-2">example</span></span>
-          {[
+          <span className="flex justify-between text-lg font-semibold">Where your credits went {viewer.kind === "demo" && <span className="text-xs font-normal text-ink-2">example</span>}</span>
+          {viewer.kind !== "demo" && <p className="text-sm text-ink-2">Nothing to show yet. After a few builds, this shows what used the most credits, with a tip for each.</p>}
+          {viewer.kind === "demo" && [
             ["3 fix attempts in step 3 of Abhi Kya Banega", "Tip: describe the expected result more clearly", "12%"],
             ["Scheduled runs at 9 PM and 3 PM", "Tip: pause them when you’re not using the app", "15% a month"],
             ["Long chats in one project", "Tip: start a new chat for an unrelated change", "9%"],
@@ -169,7 +176,7 @@ export function UsagePage() {
           <span className="text-lg font-semibold">Limits</span>
           <div className="flex justify-between text-sm">Monthly spending limit <strong className="font-semibold">₹1,500</strong></div>
           <div className="flex justify-between text-sm">Alert me at <strong className="font-semibold">80%</strong></div>
-          <AddOnTip label="Limit per project" className="text-sm text-ink-2" />
+          <AddOnTip label="Limit per project" unlocked={<ProjectLimitInput />} className="text-sm text-ink-2" />
           <span className="flex gap-2"><button type="button" className={btnPrimary}>Top up</button><button type="button" className={btnOutline}>Change limit</button></span>
         </div>
       </div>
@@ -223,10 +230,30 @@ export function AccountPage() {
         <span className="text-lg font-semibold">GitHub</span>
         <p className="text-sm text-ink-2">Connect per project, in Project settings → GitHub. Architect only sees the repos you pick.</p>
       </div>
-      <div className={card}>
-        <span className="flex items-center justify-between text-lg font-semibold">Your plan <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-strong">{viewer.kind === "demo" ? "Pro" : "Free"}</span></span>
-        <p className="text-sm text-ink-2">Developer add-on: pick an exact model, limits per project, and cost per step in tokens.</p>
-      </div>
+      <PlanCard plan={viewer.kind === "demo" ? "Pro" : "Free"} />
+    </div>
+  );
+}
+
+/** Your plan, and a pretend switch for the Developer add-on so reviewers can see what it unlocks. */
+function PlanCard({ plan }: { plan: string }) {
+  const { addOn, setAddOn } = useAddOn();
+  return (
+    <div className={card}>
+      <span className="flex items-center justify-between text-lg font-semibold">
+        Your plan
+        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-strong">{addOn ? `${plan} + Developer add-on` : plan}</span>
+      </span>
+      <p className="text-sm text-ink-2">
+        {addOn ? "Developer add-on is on. " : "Developer add-on not included. "}
+        It adds: pick an exact model (in the Builder menu), a limit per project (in Usage), and tokens for each finished step (in the chat).
+      </p>
+      <span className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => setAddOn(!addOn)} className={addOn ? btnOutline : btnPrimary}>
+          {addOn ? "Turn off the Developer add-on" : "Try the Developer add-on"}
+        </button>
+        <span className="text-xs text-ink-2">Prototype only: no payment, and it stays in this browser.</span>
+      </span>
     </div>
   );
 }

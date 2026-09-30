@@ -66,7 +66,7 @@ export function useTour() {
     and go back to the default view. The next visit starts from the beginning. */
 export function forgetDemo() {
   try {
-    for (const k of ["architect.projects.demo", "architect.projects.demo2", "architect.projects.demo3", KEY, ACTIVE, "architect.github"]) localStorage.removeItem(k);
+    for (const k of ["architect.projects.demo", "architect.projects.demo2", "architect.projects.demo3", KEY, ACTIVE, "architect.github", "architect.addon"]) localStorage.removeItem(k);
     localStorage.setItem("architect.devView", "off");
   } catch {
     /* nothing remembered; nothing to clear */
