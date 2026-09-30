@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "./Icon";
-import { DevOnly, DevTag } from "./DevTag";
+import { AddOnTag, DevOnly, DevTag } from "./DevTag";
 import { useProjects } from "@/lib/projects";
 import { useCreditsUsed } from "@/lib/credits";
 import { useViewer } from "@/lib/viewer-context";
 import { DEMO_PROJECT_ID } from "@/lib/demo";
 import { aiTaskFromIdea, createProject, detectAppType, instructionsFromIdea, isMealIdea, nameFromIdea, needsAI, suggestTarget, whatFromIdea } from "@/lib/model";
+import { useAddOn } from "@/lib/addon";
+import { AddOnTip, agentModels } from "./AddOnTip";
 
 /* Design A5 (and A6 in Developer view). Shows what the planner understood; nothing is built yet. */
 
@@ -62,6 +64,9 @@ export function Refine({ idea }: { idea: string }) {
   const [appType, setAppType] = useState(() => detectAppType(idea));
   const [withAI, setWithAI] = useState(() => needsAI(idea));
   const [model, setModel] = useState<"Faster & cheaper" | "Best quality">("Faster & cheaper");
+  const [framework, setFramework] = useState("Lyzr");
+  const [agentModel, setAgentModel] = useState<string | undefined>(undefined);
+  const { addOn } = useAddOn();
   const [theme, setTheme] = useState(0);
   const [busy, setBusy] = useState(false);
 
@@ -70,7 +75,7 @@ export function Refine({ idea }: { idea: string }) {
     const made = createProject({ idea, name, what, target, instructions, appType, theme, withAI });
     // In the demo, the meal app is the one app every journey uses, so it gets a fixed id.
     const demoApp = viewer.kind === "demo" && made.kind === "meal" && !projects.some((x) => x.id === DEMO_PROJECT_ID);
-    const p = { ...made, ...(demoApp ? { id: DEMO_PROJECT_ID } : {}), reviewOn: viewer.kind === "demo" };
+    const p = { ...made, ...(demoApp ? { id: DEMO_PROJECT_ID } : {}), reviewOn: viewer.kind === "demo", framework, agentModel: addOn ? agentModel : undefined };
     add(p);
     router.push(`/p/${p.id}/plan`);
   };
@@ -208,20 +213,20 @@ export function Refine({ idea }: { idea: string }) {
               <div className="flex flex-col gap-2 border-t border-accent-line pt-3 dev:hidden">
                 <div className="flex items-center justify-between text-xs tracking-[0.04em] text-ink-2 uppercase">
                   Model
-                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] tracking-normal text-accent-strong normal-case">Auto</span>
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] tracking-normal text-accent-strong normal-case">{addOn && agentModel ? agentModel : "Auto"}</span>
                 </div>
                 <Segmented label="Model" value={model} options={["Faster & cheaper", "Best quality"]} onChange={setModel} />
                 <span className="text-xs text-ink-2">Best quality costs more each time someone uses your app.</span>
               </div>
 
-              <DevOnly>
+              <DevOnly alsoWhen={addOn}>
                 <div className="flex flex-col gap-2 border-t border-accent-line pt-3">
                   <div className="flex items-center justify-between text-xs tracking-[0.04em] text-ink-2 uppercase">
                     <label htmlFor="r-fw">Framework</label>
-                    <DevTag />
+                    {addOn ? <AddOnTag /> : <DevTag />}
                   </div>
-                  <select id="r-fw" className={`${input} py-2.5`}>
-                    <option>Lyzr (recommended)</option>
+                  <select id="r-fw" value={framework} onChange={(e) => setFramework(e.target.value)} className={`${input} py-2.5`}>
+                    <option value="Lyzr">Lyzr (recommended)</option>
                     <option>LangGraph</option>
                     <option>CrewAI</option>
                     <option>OpenAI Agents SDK</option>
@@ -231,15 +236,19 @@ export function Refine({ idea }: { idea: string }) {
                 </div>
                 <div className="flex flex-col gap-2 border-t border-accent-line pt-3">
                   <div className="flex items-center justify-between text-xs tracking-[0.04em] text-ink-2 uppercase">
-                    <label htmlFor="r-model">Model</label>
-                    <DevTag />
+                    <label htmlFor="r-model">Exact model</label>
+                    {addOn ? <AddOnTag /> : <DevTag />}
                   </div>
-                  <select id="r-model" className={`${input} py-2.5`}>
-                    <option>gpt-4.1-mini · OpenAI</option>
-                    <option>claude-haiku-4-5 · Anthropic</option>
-                    <option>gemini-2.5-flash · Google</option>
-                  </select>
-                  <span className="text-xs text-ink-2">Picking an exact model is part of the Developer add-on.</span>
+                  {addOn ? (
+                    <select id="r-model" value={agentModel ?? ""} onChange={(e) => setAgentModel(e.target.value || undefined)} className={`${input} py-2.5`}>
+                      <option value="">Auto (Architect picks)</option>
+                      {agentModels.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <AddOnTip label="Pick an exact model" className="text-[13px] text-ink-2" />
+                  )}
                 </div>
               </DevOnly>
             </div>

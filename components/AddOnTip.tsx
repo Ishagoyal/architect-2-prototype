@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "./Icon";
-import { useAddOn } from "@/lib/addon";
+import { LET_AUTO_PICK, useAddOn, useExactModel } from "@/lib/addon";
 import { UnlockButton } from "./UpgradeModal";
 
 /** A row for something that comes with the paid Developer add-on (PRODUCT.md: "Free users see,
@@ -40,22 +40,8 @@ export function AddOnTip({ label, className = "", unlocked }: { label: string; c
 
 /** The exact model picker, once the add-on is on. Names are model families, as examples. */
 export function ExactModelPicker() {
-  // Remembered in this browser, so closing and reopening the menu keeps the choice.
-  const [model, setModelState] = useState(() => {
-    try {
-      return localStorage.getItem("architect.model") ?? "Let Auto pick";
-    } catch {
-      return "Let Auto pick";
-    }
-  });
-  const setModel = (m: string) => {
-    setModelState(m);
-    try {
-      localStorage.setItem("architect.model", m);
-    } catch {
-      /* not remembered */
-    }
-  };
+  // Shared with the Builder button, and remembered in this browser.
+  const [model, setModel] = useExactModel();
   return (
     <select
       aria-label="Exact model"
@@ -63,7 +49,7 @@ export function ExactModelPicker() {
       onChange={(e) => setModel(e.target.value)}
       className="h-8 rounded-lg border border-line-strong bg-raised px-2 text-[13px] text-ink"
     >
-      {["Let Auto pick", "Claude Sonnet", "Claude Opus", "GPT", "Gemini Pro"].map((m) => (
+      {[LET_AUTO_PICK, "Claude Sonnet", "Claude Opus", "GPT", "Gemini Pro"].map((m) => (
         <option key={m}>{m}</option>
       ))}
     </select>
@@ -86,3 +72,6 @@ export function ProjectLimitInput() {
     </span>
   );
 }
+
+/** Exact models for the app's own AI (Developer add-on). Examples. */
+export const agentModels = ["gpt-4.1-mini · OpenAI", "claude-haiku-4-5 · Anthropic", "gemini-2.5-flash · Google"];

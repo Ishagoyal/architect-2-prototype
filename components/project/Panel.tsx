@@ -9,7 +9,7 @@ import { accept, buildNow, confirmImport, reject, send, suggest, type Mode } fro
 import { acceptCheckChange, continueBuild, lowerFirst, planTotals, rejectCheckChange, startBuild, STEP_MS, type ChatItem, type Project } from "@/lib/model";
 import { useProjectUI } from "./ProjectUI";
 import { AddOnTip, ExactModelPicker } from "../AddOnTip";
-import { useAddOn } from "@/lib/addon";
+import { LET_AUTO_PICK, useAddOn, useExactModel } from "@/lib/addon";
 import { ConnectAppsList } from "../ConnectApps";
 
 /* Right panel: "Needs you" on top (hidden when empty, at most 2), chat below. */
@@ -382,19 +382,23 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
   const [pick, setPick] = useState("Auto");
   const close = useCallback(() => setOpen(false), []);
   const ref = useDismiss<HTMLDivElement>(open, close);
+  // With the Developer add-on, an exact model replaces Auto / Standard / Max.
+  const { addOn } = useAddOn();
+  const [exact, setExact] = useExactModel();
+  const shown = addOn && exact !== LET_AUTO_PICK ? exact : pick;
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         aria-expanded={open}
-        aria-label={`Builder model: ${pick}`}
+        aria-label={`Builder model: ${shown}`}
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-1 rounded-lg border bg-accent-soft font-medium text-accent-strong ${open ? "border-accent" : "border-transparent"} ${
           size === "md" ? "h-9 gap-1.5 px-3 text-[13px]" : "h-[30px] px-2 text-xs"
         }`}
       >
         <Icon name="sparkle" size={size === "md" ? 13 : 12} strokeWidth={2} />
-        {size === "md" ? `Builder: ${pick}` : pick}
+        {size === "md" ? `Builder: ${shown}` : shown}
         <Icon name="chevronDown" size={11} strokeWidth={2} />
       </button>
       {open && (
@@ -414,15 +418,16 @@ export function BuilderMenu({ size = "sm", placement = "up" }: { size?: "sm" | "
                 key={b.key}
                 type="button"
                 role="radio"
-                aria-checked={pick === b.key}
+                aria-checked={shown === b.key}
                 onClick={() => {
                   setPick(b.key);
+                  setExact(LET_AUTO_PICK);
                   close();
                 }}
-                className={`flex items-start gap-3 rounded-xl border p-3 text-left ${pick === b.key ? "border-accent bg-needs" : "border-line-strong hover:bg-hover"}`}
+                className={`flex items-start gap-3 rounded-xl border p-3 text-left ${shown === b.key ? "border-accent bg-needs" : "border-line-strong hover:bg-hover"}`}
               >
-                <span className={`mt-1 flex size-3.5 shrink-0 items-center justify-center rounded-full border ${pick === b.key ? "border-accent" : "border-ink-3"}`}>
-                  {pick === b.key && <span className="size-2 rounded-full bg-accent" />}
+                <span className={`mt-1 flex size-3.5 shrink-0 items-center justify-center rounded-full border ${shown === b.key ? "border-accent" : "border-ink-3"}`}>
+                  {shown === b.key && <span className="size-2 rounded-full bg-accent" />}
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="flex items-center gap-2 text-sm">

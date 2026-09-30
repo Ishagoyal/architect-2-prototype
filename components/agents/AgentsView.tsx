@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "../Icon";
-import { DevOnly, DevTag } from "../DevTag";
+import { AddOnTag, DevOnly, DevTag } from "../DevTag";
 import { Modal, btnOutline, btnPrimary } from "../Modal";
 import { useProjectUI } from "../project/ProjectUI";
 import { uid, type Project } from "@/lib/model";
+import { useAddOn } from "@/lib/addon";
+import { AddOnTip, agentModels } from "../AddOnTip";
 
 /* Designs C1–C8: the app's agents and automations. Click any box to change it. */
 
@@ -68,7 +70,7 @@ function baseAgents(p: Project): Agent[] {
     {
       key: "main",
       name: p.plan.ai.name,
-      framework: "Lyzr",
+      framework: p.framework ?? "Lyzr",
       where: `agents/${meal ? "meal-planner" : "assistant"}/`,
       does: meal ? "Suggests 3 Indian meals from what’s in the kitchen, for the time of day and the family size." : p.plan.ai.does.split(". ")[0] + ".",
       never: meal ? "Change the kitchen stock. Suggest a dish from the last 3 days." : "Change or delete anything by itself.",
@@ -119,6 +121,7 @@ function Box({ label, title, sub, on, onClick, status }: { label: string; title:
 const dotted = { backgroundImage: "radial-gradient(var(--line-strong) 1px, transparent 1px)", backgroundSize: "18px 18px" };
 
 function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project: Project; update: Update; onClose: () => void }) {
+  const { addOn } = useAddOn();
   const [does, setDoes] = useState(agent.does);
   const [never, setNever] = useState(agent.never);
   const [tools, setTools] = useState(agent.tools);
@@ -247,21 +250,35 @@ function AgentPanel({ agent, project, update, onClose }: { agent: Agent; project
             </div>
             <span className="text-xs text-ink-2">Best quality costs more each time someone uses your app.</span>
           </div>
-          <DevOnly>
+          <DevOnly alsoWhen={addOn}>
             <div className="flex flex-col gap-1.5">
               <span className="flex items-center justify-between text-sm font-semibold">
-                Model · backup if it fails <DevTag />
+                Model · backup if it fails {addOn ? <AddOnTag /> : <DevTag />}
               </span>
-              <span className="grid grid-cols-2 gap-2">
-                <select aria-label="Model" className={`${ta} py-2`}>
-                  <option>gpt-4.1-mini</option>
-                  <option>claude-haiku-4-5</option>
-                </select>
-                <select aria-label="Backup model" className={`${ta} py-2`}>
-                  <option>claude-haiku-4-5</option>
-                  <option>gpt-4.1-mini</option>
-                </select>
-              </span>
+              {addOn ? (
+                <span className="grid grid-cols-2 gap-2">
+                  <select
+                    aria-label="Model"
+                    value={project.agentModel ?? ""}
+                    onChange={(e) => update((q) => ({ ...q, agentModel: e.target.value || undefined }))}
+                    className={`${ta} py-2`}
+                  >
+                    <option value="">Auto</option>
+                    {agentModels.map((m) => (
+                      <option key={m} value={m}>{m.split(" · ")[0]}</option>
+                    ))}
+                  </select>
+                  <select aria-label="Backup model" className={`${ta} py-2`}>
+                    {agentModels
+                      .filter((m) => m !== project.agentModel)
+                      .map((m) => (
+                        <option key={m}>{m.split(" · ")[0]}</option>
+                      ))}
+                  </select>
+                </span>
+              ) : (
+                <AddOnTip label={`Auto now · pick an exact model and a backup`} className="text-[13px] text-ink-2" />
+              )}
             </div>
           </DevOnly>
           <div className="relative flex flex-col gap-2 rounded-xl bg-sunken p-3">

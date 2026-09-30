@@ -130,7 +130,7 @@ function Summary({ project, onStep, onFull }: { project: Project; onStep: (i: nu
             <DevOnly>
               <div className="flex flex-col gap-1 border-t border-line pt-2 text-xs text-dev">
                 <DevTag className="self-start" />
-                <span>Framework: Lyzr · Model: gpt-4.1-mini</span>
+                <span>Framework: {project.framework ?? "Lyzr"} · Model: {project.agentModel?.split(" · ")[0] ?? "Auto"}</span>
                 <span className="font-mono">Files: agents/{project.kind === "meal" ? "meal-planner" : "assistant"}/</span>
               </div>
             </DevOnly>
@@ -510,7 +510,7 @@ function StepPanel({ project, i, onClose, onChange }: { project: Project; i: num
                 <strong className="font-semibold">Files it will create or change:</strong> <span className="font-mono text-xs">{step.files.join(", ")}</span>
               </span>
               <span>
-                <strong className="font-semibold">Models:</strong> builder Auto{step.kind === "ai" ? " · app’s AI gpt-4.1-mini" : ""}
+                <strong className="font-semibold">Models:</strong> builder Auto{step.kind === "ai" ? ` · app’s AI ${project.agentModel?.split(" · ")[0] ?? "Auto"}` : ""}
               </span>
               {step.uses && (
                 <span>
