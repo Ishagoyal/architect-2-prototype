@@ -1,4 +1,6 @@
 import { Icon, type IconName } from "@/components/Icon";
+import { Placeholder } from "@/components/Placeholder";
+import { demoProject } from "@/lib/demo";
 
 /* App view, mid-build (design A11). Journey 1 makes this move through real states. */
 
@@ -15,7 +17,10 @@ const tools: { label: string; icon: IconName; tip: string; on?: boolean }[] = [
   { label: "Try as a user", icon: "user", tip: "Open your app signed in as a test user, with sample data" },
 ];
 
-export default function AppView() {
+export default async function AppView({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  // Only the demo meal app has a preview so far.
+  if (id !== demoProject.id) return <Placeholder title="App" />;
   return (
     <>
       <div className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2 text-[13px] md:px-5">

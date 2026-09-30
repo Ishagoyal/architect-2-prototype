@@ -5,18 +5,19 @@ import { useCallback, useState } from "react";
 import { Icon } from "./Icon";
 import { usePrefs } from "@/lib/prefs";
 import { useDismiss } from "./useDismiss";
-import { demoUser } from "@/lib/demo";
+import { useViewer } from "@/lib/viewer-context";
+import { signOut } from "@/app/actions";
 
 /* The same bottom-left corner on every screen, at home and inside a project:
    Credits, Settings, your name, the ☾ / ☀ button, and the Developer view chip when it's on. */
 
-export function ThemeButton({ className = "" }: { className?: string }) {
+export function ThemeButton({ className = "hover:bg-hover" }: { className?: string }) {
   const { toggleTheme } = usePrefs();
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink hover:bg-hover ${className}`}
+      className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${className}`}
     >
       {/* Both icons are rendered; the theme on <html> picks one, so there's no flash. */}
       <span className="dark:hidden" title="Switch to dark mode">
@@ -47,12 +48,13 @@ export function DevChip() {
 }
 
 export function Avatar({ size = 32 }: { size?: number }) {
+  const viewer = useViewer();
   return (
     <span
       style={{ width: size, height: size }}
       className="flex shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-on-primary"
     >
-      {demoUser.initials}
+      {viewer.initials}
     </span>
   );
 }
@@ -63,6 +65,7 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
   const close = useCallback(() => setOpen(false), []);
   const ref = useDismiss<HTMLDivElement>(open, close);
   const { devView, setDevView } = usePrefs();
+  const viewer = useViewer();
 
   return (
     <div ref={ref} className="relative min-w-0">
@@ -73,7 +76,7 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
         className={`flex min-w-0 items-center gap-2.5 rounded-[10px] py-0.5 text-left ${compact ? "" : "pr-2"}`}
       >
         <Avatar />
-        <span className={compact ? "sr-only" : "truncate text-[13px]"}>{demoUser.name}</span>
+        <span className={compact ? "sr-only" : "truncate text-[13px]"}>{viewer.name}</span>
       </button>
       {open && (
         <div
@@ -107,6 +110,16 @@ export function NameMenu({ placement = "up", compact = false }: { placement?: "u
             <Icon name="settings" size={15} />
             Account settings
           </Link>
+          <form action={signOut}>
+            <button
+              type="submit"
+              role="menuitem"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-hover"
+            >
+              <Icon name="back" size={15} />
+              {viewer.kind === "demo" ? "Leave the demo" : "Sign out"}
+            </button>
+          </form>
         </div>
       )}
     </div>

@@ -7,7 +7,9 @@ import { Icon, type IconName } from "./Icon";
 import { YouCorner, ThemeButton, NameMenu, DevChip, CreditsLink } from "./YouCorner";
 import { BottomTabs, SheetRow } from "./BottomTabs";
 import { Sheet } from "./Sheet";
-import { demoUser } from "@/lib/demo";
+import { WorkspaceMenu } from "./WorkspaceMenu";
+import { DemoTourCard, DemoTourButton } from "./DemoTour";
+import { useViewer } from "@/lib/viewer-context";
 
 /* Home, Projects, Agents and the account pages share this sidebar.
    Phone: the sidebar becomes a bottom tab bar, with the rest under "More". */
@@ -19,8 +21,6 @@ const nav: { label: string; href: string; icon: IconName }[] = [
   { label: "Explore", href: "/explore", icon: "explore" },
   { label: "Help & Learn", href: "/help", icon: "help" },
 ];
-
-const CREDITS_USED = 0;
 
 export function Logo() {
   return (
@@ -36,27 +36,10 @@ export function Logo() {
   );
 }
 
-function WorkspaceButton({ compact = false }: { compact?: boolean }) {
-  return (
-    <button
-      type="button"
-      className={`flex items-center justify-between rounded-[10px] border border-line bg-raised text-[13px] ${
-        compact ? "h-9 gap-1.5 px-2" : "h-11 w-full px-3"
-      }`}
-    >
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="flex size-[22px] shrink-0 items-center justify-center rounded-md bg-accent text-[11px] font-semibold text-white dark:text-on-primary">
-          {demoUser.firstName[0]}
-        </span>
-        <span className="truncate">{demoUser.workspace}</span>
-      </span>
-      <Icon name="chevronDown" size={14} strokeWidth={2} />
-    </button>
-  );
-}
-
 export function HomeShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const viewer = useViewer();
+  const creditsUsed = viewer.kind === "demo" ? 74 : 0;
   const [more, setMore] = useState(false);
   const closeMore = useCallback(() => setMore(false), []);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
@@ -73,7 +56,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
           <Logo />
         </div>
         <div className="mb-3.5">
-          <WorkspaceButton />
+          <WorkspaceMenu />
         </div>
         {nav.map((n) => {
           const active = isActive(n.href);
@@ -92,13 +75,14 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
           );
         })}
         <div className="flex-1" />
-        <YouCorner settingsHref="/settings" settingsLabel="Settings" creditsUsed={CREDITS_USED} />
+        <DemoTourCard autoOpenMedia="(min-width: 768px)" />
+        <YouCorner settingsHref="/settings" settingsLabel="Settings" creditsUsed={creditsUsed} />
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Phone top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-rail px-4 md:hidden">
-          <WorkspaceButton compact />
+          <WorkspaceMenu compact />
           <div className="flex items-center gap-1">
             <DevChip />
             <ThemeButton />
@@ -109,6 +93,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 pb-20 md:overflow-y-auto md:pb-0">{children}</main>
       </div>
 
+      <DemoTourButton className="fixed bottom-[72px] left-4 z-30 md:hidden" />
       <BottomTabs
         label="Main"
         tabs={[
@@ -122,7 +107,7 @@ export function HomeShell({ children }: { children: React.ReactNode }) {
             Help & Learn
           </SheetRow>
           <div onClick={closeMore}>
-            <CreditsLink used={CREDITS_USED} inSheet />
+            <CreditsLink used={creditsUsed} inSheet />
           </div>
           <SheetRow href="/settings" icon="settings" onClick={closeMore}>
             Settings

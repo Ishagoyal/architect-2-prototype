@@ -10,10 +10,6 @@ const titles: Record<string, string> = {
   usage: "Credits and usage",
 };
 
-export function generateStaticParams() {
-  return Object.keys(titles).map((section) => ({ section }));
-}
-
 export default async function Section({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
   const title = titles[section];
