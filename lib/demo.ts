@@ -57,8 +57,8 @@ export function getProject(id: string): Project {
 /** Workspaces in the demo (design A26). */
 export const demoWorkspaces = [
   {
-    name: "Isha’s workspace",
-    initial: "I",
+    name: "Alex’s workspace",
+    initial: "A",
     color: "bg-accent",
     lines: ["Personal · Pro plan · just you", "3 projects · credits running low, 74% used"],
   },

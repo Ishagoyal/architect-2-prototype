@@ -39,8 +39,8 @@ export function makeViewer(kind: Viewer["kind"], name: string, extra: Partial<Vi
   };
 }
 
-// The demo uses the same person and projects as the design file.
-export const demoViewer = makeViewer("demo", "Isha Goyal", { role: "Product Management" });
+// The demo uses a neutral name, with the design file’s projects.
+export const demoViewer = makeViewer("demo", "Alex Morgan", { role: "Product Management" });
 
 export async function getViewer(): Promise<Viewer | null> {
   const store = await cookies();
